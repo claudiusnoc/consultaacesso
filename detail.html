@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Detalhe do Chamado - EQS</title>
+    <meta name="theme-color" content="#1a1a2e">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="logo-eqs.webp">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Outfit:wght@500;700;800&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="detail.css">
+</head>
+
+<body>
+    <!-- Top Bar -->
+    <nav class="detail-topbar">
+        <button class="topbar-btn" onclick="history.back()" aria-label="Voltar">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </button>
+        <h1 class="topbar-title">Acesso ao Site</h1>
+        <div class="toggle-wrap" style="position: relative; top: auto; right: auto; z-index: 10;">
+            <input type="checkbox" id="theme-check">
+            <label for="theme-check" class="toggle-label" aria-label="Alterar Tema">
+                <span class="toggle-knob"></span>
+            </label>
+        </div>
+    </nav>
+
+    <main class="detail-container">
+        <!-- ========== VIEW: Detalhe ========== -->
+        <div id="detail-view">
+            <div class="ticket-wrapper" id="ticket-wrapper">
+                <div class="detail-ticket ticket-top" id="ticket-top">
+                    <div class="ticket-hero">
+                        <div class="ticket-hero-overlay"></div>
+                        <div class="ticket-hero-content">
+                            <span class="ticket-hero-label">Telecom Site</span>
+                            <h2 class="ticket-hero-title" id="detail-site-name">Claro SA - RJ_SNT_042</h2>
+                        </div>
+                    </div>
+                    <div class="ticket-body">
+                        <div class="ticket-row">
+                            <div class="ticket-icon-wrap">
+                                <span class="material-symbols-outlined">location_on</span>
+                            </div>
+                            <div class="ticket-row-text">
+                                <span class="ticket-row-label">Localização</span>
+                                <span class="ticket-row-value" id="detail-location">Rua Telecom 123, Rio de Janeiro</span>
+                            </div>
+                        </div>
+                        <div class="ticket-grid">
+                            <div class="ticket-grid-item">
+                                <span class="ticket-row-label">Tipo de Acesso</span>
+                                <div class="ticket-grid-value">
+                                    <span class="material-symbols-outlined text-sm">build</span>
+                                    <span id="detail-access-type">MANUTENÇÃO</span>
+                                </div>
+                            </div>
+                            <div class="ticket-grid-item">
+                                <span class="ticket-row-label">Detentora</span>
+                                <div class="ticket-grid-value">
+                                    <span class="material-symbols-outlined text-sm">cell_tower</span>
+                                    <span id="detail-detentora">TBSA</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="ticket-tear-zone" id="ticket-tear-zone">
+                    <div class="tear-cutout tear-cutout-left"></div>
+                    <div class="tear-line"></div>
+                    <div class="tear-cutout tear-cutout-right"></div>
+                </div>
+                <div class="detail-ticket ticket-bottom" id="ticket-bottom">
+                    <div class="ticket-body">
+                        <div class="ticket-status-row">
+                            <div>
+                                <span class="ticket-row-label">Validade & Status</span>
+                                <div class="ticket-status-info">
+                                    <span class="ticket-date" id="detail-date">31/05/2026</span>
+                                    <span class="ticket-status-dot" id="detail-status-dot"></span>
+                                    <span class="ticket-status-text" id="detail-status">Aprovado</span>
+                                </div>
+                            </div>
+                            <div class="ticket-qr">
+                                <span class="material-symbols-outlined">qr_code_2</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-chamado-card glass">
+                <div class="chamado-info">
+                    <span class="ticket-row-label">Chamado</span>
+                    <span class="chamado-id" id="detail-chamado">#00358519</span>
+                </div>
+                <button class="chamado-copy-btn" id="copy-chamado-btn" aria-label="Copiar chamado">
+                    <span class="material-symbols-outlined">content_copy</span>
+                </button>
+            </div>
+
+            <div class="detail-obs-card glass" id="detail-obs-section">
+                <div class="obs-header">
+                    <span class="material-symbols-outlined">info</span>
+                    <span class="ticket-row-label">Observações</span>
+                </div>
+                <p class="obs-text" id="detail-obs">Carta encaminhada ao local. Problemas de acesso, acionar o NOC TBSA.</p>
+            </div>
+
+            <div class="detail-ids-card glass">
+                <div class="ids-grid">
+                    <div class="ids-item">
+                        <span class="ticket-row-label">ID TBSA</span>
+                        <span class="ids-value" id="detail-id-tbsa">TEMGBHO0027</span>
+                    </div>
+                    <div class="ids-item">
+                        <span class="ticket-row-label">ID Claro</span>
+                        <span class="ids-value" id="detail-id-claro">EMG0010</span>
+                    </div>
+                </div>
+            </div>
+
+            <button class="detail-action-btn" id="copy-all-btn">
+                <span class="material-symbols-outlined">content_copy</span>
+                COPIAR TODOS OS DADOS
+            </button>
+        </div>
+
+
+    </main>
+
+    <!-- Bottom Nav (3 items, sem Perfil) -->
+    <nav class="detail-bottomnav">
+        <a href="index.html" class="bottomnav-item" id="nav-consulta">
+            <span class="material-symbols-outlined">search</span>
+            <span class="bottomnav-label">Consulta</span>
+        </a>
+        <a href="#" class="bottomnav-item active" id="nav-detail">
+            <span class="material-symbols-outlined" id="nav-detail-icon">confirmation_number</span>
+            <span class="bottomnav-label">Detalhe</span>
+        </a>
+
+    </nav>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="detail.js"></script>
+</body>
+
+</html>
