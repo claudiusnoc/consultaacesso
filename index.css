@@ -961,19 +961,15 @@ footer {
 }
 
 /* ════════════════════════════════════════
-   View Transitions API — cross-document
+   View Transitions API — same-document (SPA)
    ════════════════════════════════════════ */
 
-@view-transition {
-    navigation: auto;
-}
-
-/* fade + scale out on leaving page */
+/* fade + scale out on leaving screen */
 ::view-transition-old(root) {
     animation: 200ms ease-out both viewOut;
 }
 
-/* fade + translate in on entering page */
+/* fade + translate in on entering screen */
 ::view-transition-new(root) {
     animation: 300ms ease-out both viewIn;
 }
@@ -990,4 +986,20 @@ footer {
         opacity: 0;
         transform: translateY(12px);
     }
+}
+
+/* ════════════════════════════════════════
+   Screen visibility (SPA)
+   ════════════════════════════════════════ */
+
+#screen-detail {
+    display: none;
+}
+
+body.showing-detail #screen-index {
+    display: none;
+}
+
+body.showing-detail #screen-detail {
+    display: block;
 }

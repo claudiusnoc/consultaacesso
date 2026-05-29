@@ -13,7 +13,7 @@
     --shadow: 0 24px 60px rgba(85, 34, 38, 0.16);
 }
 
-body.dark-mode {
+body.showing-detail.dark-mode {
     --bg: #0f0b0c;
     --bg-2: #1b1113;
     --card: rgba(28, 20, 22, 0.92);
@@ -24,12 +24,7 @@ body.dark-mode {
     --shadow: 0 24px 60px rgba(0, 0, 0, 0.42);
 }
 
-html, body {
-    min-height: 100%;
-}
-
-body {
-    margin: 0;
+body.showing-detail {
     color: var(--text);
     background:
         linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.28)),

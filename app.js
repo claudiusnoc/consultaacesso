@@ -1,12 +1,11 @@
 const CONFIG = {
     CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSd38yd9rKqhhtcr-np09wmsa2VsS2wV4cQqPjqQbzV7bUhZJTWwrXqO-4aPAHK9g/pub?output=csv',
     CACHE_KEY: 'eqs-data-cache',
-    CACHE_TTL: 5 * 60 * 1000, // 5 minutes
+    CACHE_TTL: 5 * 60 * 1000,
     DEBOUNCE_DELAY: 300,
     FETCH_TIMEOUT: 6000
 };
 
-// Fallback data
 const OFFLINE_DATA = [
     { "c": "00358519", "t": "TEMGBHO0027", "l": "EMG0010", "f": "2026-05-31", "o": "Carta encaminhada ao local. Problemas de acesso, acionar o NOC TBSA.", "e": "Rua exemplo, bairro exemplo - Belo Horizonte/MG" },
     { "c": "00358516", "t": "TEMGBHO0004", "l": "EMG0135", "f": "2026-05-31", "o": "Necessário retirar a chave na Claro.", "e": "Não informado" },
@@ -34,9 +33,31 @@ const Elements = {
     filterChips: document.querySelectorAll('.filter-chip')
 };
 
+// === Detail Elements (shared across screens) ===
+const DetailEls = {
+    siteCode: document.getElementById('ticket-site-code'),
+    location: document.getElementById('detail-location'),
+    accessType: document.getElementById('detail-access-type'),
+    status: document.getElementById('detail-status'),
+    statusDot: document.getElementById('detail-status-dot'),
+    address: document.getElementById('ticket-address'),
+    chamado: document.getElementById('detail-chamado'),
+    obs: document.getElementById('detail-obs'),
+    obsSection: document.getElementById('detail-obs-section'),
+    idTbsa: document.getElementById('detail-id-tbsa'),
+    idClaro: document.getElementById('detail-id-claro'),
+    copyChamado: document.getElementById('copy-chamado-btn'),
+    copyAll: document.getElementById('copy-all-btn'),
+    ticketWrapper: document.getElementById('ticket-wrapper'),
+};
+const obsBlock = DetailEls.obs ? DetailEls.obs.closest('.obs-block') : null;
+
 let currentFilter = 'all';
 
-// === Utilities ===
+// ════════════════════════════════════════
+// Utilities
+// ════════════════════════════════════════
+
 function escapeHTML(str) {
     if (!str) return '';
     const div = document.createElement('div');
@@ -52,23 +73,181 @@ function debounce(fn, delay) {
     };
 }
 
-function showToast(message, duration = 2500) {
+function showToast(message, duration) {
     const toast = document.getElementById('toast');
+    if (!toast) return;
     toast.textContent = message;
     toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), duration);
+    clearTimeout(showToast._timer);
+    showToast._timer = setTimeout(() => toast.classList.remove('show'), duration || 2500);
 }
 
-// === Local Cache ===
+function formatDate(dateStr) {
+    if (!dateStr) return '--/--/----';
+    const parts = dateStr.split('-');
+    return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : dateStr;
+}
+
+function checkIfOverdue(dateStr) {
+    if (!dateStr) return false;
+    return new Date(`${dateStr}T23:59:59`) < new Date();
+}
+
+function formatDisplayDate(dateStr) {
+    if (!dateStr) return '--/--/----';
+    try {
+        const parts = dateStr.split('-');
+        if (parts.length !== 3) return dateStr;
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    } catch (e) { return dateStr; }
+}
+
+function hasValidAddress(address) {
+    const value = (address || '').trim();
+    return value !== '' && value.toLowerCase() !== 'não informado' && value.toLowerCase() !== 'nao informado';
+}
+
+function buildMapsSearchUrl(address) {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address.trim())}`;
+}
+
+async function copyText(text, successMessage, errorMessage) {
+    try {
+        await navigator.clipboard.writeText(text);
+        showToast(successMessage);
+    } catch (err) {
+        try {
+            const temp = document.createElement('textarea');
+            temp.value = text;
+            temp.style.position = 'fixed';
+            temp.style.opacity = '0';
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            temp.remove();
+            showToast(successMessage);
+        } catch (e) {
+            showToast(errorMessage);
+        }
+    }
+}
+
+function buildCopyAllText(data) {
+    return `CHAMADO #${data.c || '--'} | TBSA: ${data.t || '--'} | CLARO: ${data.l || '--'} | ENDERECO: ${data.e || 'Não informado'} | VÁLIDO ATÉ ${window._dateDisplay || '--/--/----'} | STATUS: ${window._statusLabel || '--'} | OBS: ${data.o || 'Sem observações.'}`;
+}
+
+function playTicketCopyAnimation() {
+    const wrapper = DetailEls.ticketWrapper;
+    if (!wrapper) return;
+    wrapper.classList.remove('ticket-copy-feedback');
+    void wrapper.offsetWidth;
+    wrapper.classList.add('ticket-copy-feedback');
+    clearTimeout(playTicketCopyAnimation._timer);
+    playTicketCopyAnimation._timer = setTimeout(() => {
+        wrapper.classList.remove('ticket-copy-feedback');
+    }, 660);
+}
+
+// ════════════════════════════════════════
+// Screen Navigation (SPA)
+// ════════════════════════════════════════
+
+function populatePage(data) {
+    const isOverdue = checkIfOverdue(data.f);
+    const status = (data.s || '').trim().toLowerCase();
+    const isApproved = status === 'aprovado' || status === '';
+    const isBlocked = isOverdue || !isApproved;
+    const statusLabel = isOverdue ? 'Vencido' : (isApproved ? 'Aprovado' : (data.s || 'Bloqueado'));
+
+    DetailEls.siteCode.textContent = data.t || '--';
+    DetailEls.location.textContent = data.l || '--';
+    DetailEls.accessType.textContent = 'Manutenção';
+    DetailEls.status.textContent = statusLabel;
+    const address = data.e || 'Não informado';
+    DetailEls.address.textContent = address;
+
+    if (hasValidAddress(address)) {
+        DetailEls.address.href = buildMapsSearchUrl(address);
+        DetailEls.address.target = '_blank';
+        DetailEls.address.rel = 'noopener noreferrer';
+        DetailEls.address.removeAttribute('aria-disabled');
+        DetailEls.address.tabIndex = 0;
+    } else {
+        DetailEls.address.removeAttribute('href');
+        DetailEls.address.removeAttribute('target');
+        DetailEls.address.removeAttribute('rel');
+        DetailEls.address.setAttribute('aria-disabled', 'true');
+        DetailEls.address.tabIndex = -1;
+    }
+
+    DetailEls.statusDot.classList.toggle('is-blocked', isBlocked);
+    DetailEls.chamado.textContent = `#${data.c || '--'}`;
+    DetailEls.idTbsa.textContent = data.t || '--';
+    DetailEls.idClaro.textContent = data.l || '--';
+
+    if (data.o) {
+        DetailEls.obs.textContent = data.o;
+        if (obsBlock) obsBlock.hidden = false;
+    } else if (obsBlock) {
+        obsBlock.hidden = true;
+    }
+
+    if (DetailEls.copyAll) {
+        DetailEls.copyAll.disabled = isBlocked;
+        DetailEls.copyAll.setAttribute('aria-disabled', String(isBlocked));
+        DetailEls.copyAll.title = isBlocked ? 'Chamado bloqueado' : 'Copiar todos os dados';
+    }
+
+    window._ticketData = data;
+    window._dateDisplay = formatDate(data.f);
+    window._statusLabel = statusLabel;
+    window._isBlocked = isBlocked;
+}
+
+function showScreen(screenId, data) {
+    const updateDOM = () => {
+        if (screenId === 'detail') {
+            document.body.classList.add('showing-detail');
+            if (data) populatePage(data);
+            document.title = `Detalhe: ${data ? (data.t || 'Chamado') : 'Chamado'} - EQS`;
+        } else {
+            document.body.classList.remove('showing-detail');
+            document.title = 'Consulta de Sites - EQS';
+        }
+    };
+
+    if (document.startViewTransition) {
+        document.startViewTransition(updateDOM);
+    } else {
+        updateDOM();
+    }
+}
+
+// Get ticket data from URL or sessionStorage
+function getTicketData() {
+    const params = new URLSearchParams(window.location.search);
+    const encoded = params.get('data');
+    if (encoded) {
+        try { return JSON.parse(decodeURIComponent(encoded)); } catch (e) {}
+    }
+    try {
+        const stored = sessionStorage.getItem('eqs-detail');
+        if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    return null;
+}
+
+// ════════════════════════════════════════
+// Data Fetching
+// ════════════════════════════════════════
+
 function getCachedData() {
     try {
         const cached = JSON.parse(localStorage.getItem(CONFIG.CACHE_KEY));
-        // Check if cache is valid and contains the NEW 's' variable (STATUS)
-        // This is a migration fix to invalidate very old caches
         if (cached && Date.now() - cached.timestamp < CONFIG.CACHE_TTL && cached.data.length > 0 && 's' in cached.data[0]) {
             return cached.data;
         }
-    } catch (e) { }
+    } catch (e) {}
     return null;
 }
 
@@ -78,13 +257,12 @@ function setCachedData(data) {
     } catch (e) { console.warn('Cache write failed:', e); }
 }
 
-// === Fetch Data ===
 async function fetchData() {
     const cached = getCachedData();
     if (cached) {
         dataStore = cached;
         Elements.statusSync.innerHTML = '<span class="status-sync-ok">● Dados carregados do cache</span>';
-        fetchRemoteData(true); // silent background fetch
+        fetchRemoteData(true);
         return;
     }
     showInitialLoading();
@@ -95,9 +273,8 @@ function showInitialLoading() {
     Elements.spinnerContainer.style.display = 'flex';
     Elements.loadingText.style.display = 'block';
     Elements.statusSync.innerHTML = '';
-    // Show glass skeletons
     Elements.spinnerContainer.innerHTML = '';
-    for(let i=0; i<3; i++) {
+    for (let i = 0; i < 3; i++) {
         const skel = document.createElement('div');
         skel.className = 'glass card skeleton-glass';
         Elements.spinnerContainer.appendChild(skel);
@@ -190,12 +367,14 @@ function parseCSVLine(line) {
     return result;
 }
 
-// Remove accents for fuzzy search
 function removeAccents(str) {
     return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
-// === Search & Render ===
+// ════════════════════════════════════════
+// Search & Render
+// ════════════════════════════════════════
+
 function handleSearch() {
     const query = removeAccents(Elements.input.value.trim().toLowerCase());
     Elements.resultsList.innerHTML = '';
@@ -215,7 +394,6 @@ function handleSearch() {
         return;
     }
 
-    // Fuzzy-like Search (including accent removal) — ignora linhas sem chamado numérico válido
     const filtered = dataStore.filter(item => {
         if (!/^\d{5,}$/.test((item.c || '').trim())) return false;
         const tDesc = removeAccents((item.t || '').toLowerCase());
@@ -235,7 +413,6 @@ function handleSearch() {
         return;
     }
 
-    // Calculate Dashboard Stats
     let countOk = 0;
     let countBad = 0;
 
@@ -258,7 +435,6 @@ function handleSearch() {
     Elements.dashboardPanel.style.display = 'flex';
     Elements.filtersPanel.style.display = 'flex';
 
-    // Apply Quick Filters
     let finalResults = [];
     if (currentFilter === 'all') {
         finalResults = filtered;
@@ -279,8 +455,8 @@ function handleSearch() {
     }
 
     if (finalResults.length === 0) {
-         Elements.statusSearch.innerHTML = `<div style="padding:10px;color:var(--text-secondary);">Nenhum chamado nesta categoria de filtro.</div>`;
-         return;
+        Elements.statusSearch.innerHTML = `<div style="padding:10px;color:var(--text-secondary);">Nenhum chamado nesta categoria de filtro.</div>`;
+        return;
     }
 
     finalResults.forEach((item, index) => {
@@ -322,33 +498,52 @@ function createCard(item) {
     return card;
 }
 
-// Navigate to Detail Page
+// ════════════════════════════════════════
+// Event Listeners
+// ════════════════════════════════════════
+
+// Card click → show detail screen (SPA)
 document.addEventListener('click', function (e) {
     const btn = e.target.closest('.detail-btn');
     if (!btn) return;
     try {
         const data = JSON.parse(btn.dataset.detail);
         sessionStorage.setItem('eqs-detail', JSON.stringify(data));
-        window.location.href = 'detail.html?data=' + encodeURIComponent(JSON.stringify(data));
+        showScreen('detail', data);
+        history.pushState({ screen: 'detail', data: data }, '', '?site=' + encodeURIComponent(data.t || ''));
     } catch (err) { console.error('Nav error:', err); }
 });
 
-function checkIfOverdue(dateStr) {
-    if (!dateStr) return false;
-    const scheduledDate = new Date(dateStr + 'T23:59:59');
-    return scheduledDate < new Date();
+// Bottom nav "Consulta" → back to index
+document.addEventListener('click', function (e) {
+    const navBtn = e.target.closest('#nav-consulta');
+    if (!navBtn) return;
+    e.preventDefault();
+    showScreen('index');
+    history.pushState({ screen: 'index' }, '', 'index.html');
+});
+
+// Copy chamado button
+if (DetailEls.copyChamado) {
+    DetailEls.copyChamado.addEventListener('click', () => {
+        const data = window._ticketData;
+        if (!data) return;
+        playTicketCopyAnimation();
+        copyText(String(data.c || ''), 'Chamado copiado!', 'Erro ao copiar.');
+    });
 }
 
-function formatDisplayDate(dateStr) {
-    if (!dateStr) return '--/--/----';
-    try {
-        const parts = dateStr.split('-');
-        if (parts.length !== 3) return dateStr;
-        return `${parts[2]}/${parts[1]}/${parts[0]}`;
-    } catch (e) { return dateStr; }
+// Copy all button
+if (DetailEls.copyAll) {
+    DetailEls.copyAll.addEventListener('click', () => {
+        const data = window._ticketData;
+        if (!data || DetailEls.copyAll.disabled) return;
+        playTicketCopyAnimation();
+        copyText(buildCopyAllText(data), 'Dados copiados com sucesso!', 'Erro ao copiar dados.');
+    });
 }
 
-// === Initialization ===
+// Theme toggle
 Elements.themeCheck.addEventListener('change', () => {
     document.body.classList.toggle('dark-mode', Elements.themeCheck.checked);
     localStorage.setItem('eqs-theme', Elements.themeCheck.checked ? 'dark' : 'light');
@@ -359,16 +554,15 @@ if (localStorage.getItem('eqs-theme') === 'dark') {
     Elements.themeCheck.checked = true;
 }
 
+// Search events
 const debouncedSearch = debounce(handleSearch, CONFIG.DEBOUNCE_DELAY);
 Elements.input.addEventListener('input', debouncedSearch);
-
 Elements.input.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') handleSearch();
 });
-
 Elements.btn.addEventListener('click', handleSearch);
 
-// Filter chips logic
+// Filter chips
 Elements.filterChips.forEach(chip => {
     chip.addEventListener('click', (e) => {
         Elements.filterChips.forEach(c => c.classList.remove('active'));
@@ -378,9 +572,34 @@ Elements.filterChips.forEach(chip => {
     });
 });
 
+// Popstate (browser back/forward)
+window.addEventListener('popstate', function (e) {
+    if (e.state && e.state.screen === 'detail' && e.state.data) {
+        showScreen('detail', e.state.data);
+    } else {
+        showScreen('index');
+    }
+});
+
+// ════════════════════════════════════════
+// Initialization
+// ════════════════════════════════════════
+
+// On load: restore detail if coming from sessionStorage (refresh/bookmark)
+window.addEventListener('load', function initApp() {
+    const initialData = getTicketData();
+    if (initialData) {
+        // Restore detail screen without transition animation
+        document.body.classList.add('showing-detail');
+        populatePage(initialData);
+        history.replaceState({ screen: 'detail', data: initialData }, '', window.location.href);
+        sessionStorage.removeItem('eqs-detail');
+    }
+});
+
 window.addEventListener('load', fetchData);
 
-// PWA Service Worker — Force update
+// PWA Service Worker
 if ('serviceWorker' in navigator) {
     caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
     navigator.serviceWorker.getRegistrations().then(regs => {
@@ -389,29 +608,26 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// ===== PWA Install Prompt Logic =====
+// PWA Install Prompt
 let deferredPrompt;
 const pwaBanner = document.getElementById('pwa-install-banner');
 const pwaInstallBtn = document.getElementById('pwa-install');
 const pwaCloseBtn = document.getElementById('pwa-close');
 
 window.addEventListener('beforeinstallprompt', (e) => {
-    // Prevent default mini-infobar on mobile and stash it
     e.preventDefault();
     deferredPrompt = e;
-    
-    // Check if user has dismissed it before to avoid aggressive prompts
     if (localStorage.getItem('pwa-dismissed') !== 'true') {
         setTimeout(() => {
             if (pwaBanner) pwaBanner.style.display = 'flex';
-        }, 3000); // 3 seconds delay so it enters smoothly after content loads
+        }, 3000);
     }
 });
 
 if (pwaCloseBtn && pwaInstallBtn) {
     pwaCloseBtn.addEventListener('click', () => {
         if (pwaBanner) pwaBanner.style.display = 'none';
-        localStorage.setItem('pwa-dismissed', 'true'); // Hide forever
+        localStorage.setItem('pwa-dismissed', 'true');
     });
 
     pwaInstallBtn.addEventListener('click', async () => {

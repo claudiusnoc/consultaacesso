@@ -10,12 +10,16 @@
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="logo-eqs.webp">
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;700;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;700;800&family=Manrope:wght@500;600;700;800&family=Bebas+Neue&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="detail.css">
 </head>
 
 <body>
+    <!-- ===== Toggle tema (compartilhado) ===== -->
     <div class="toggle-wrap">
         <input type="checkbox" id="theme-check">
         <label for="theme-check" class="toggle-label" aria-label="Alterar Tema">
@@ -23,59 +27,146 @@
         </label>
     </div>
 
-    <main class="main-container" id="main-container">
-        <div class="hero-glass">
-            <header>
-                <h1>Consulta de Chamados TBSA</h1>
-            </header>
+    <!-- ===== TELA: CONSULTA (index) ===== -->
+    <div id="screen-index">
+        <main class="main-container" id="main-container">
+            <div class="hero-glass">
+                <header>
+                    <h1>Consulta de Chamados TBSA</h1>
+                </header>
 
-            <div class="search-section">
-                <div class="search-box">
-                    <label class="search-field" for="search-input">
-                        <span class="search-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" focusable="false">
-                                <path d="M9.5 3a6.5 6.5 0 0 1 5.18 10.43l4.45 4.44a1 1 0 0 1-1.42 1.42l-4.44-4.45A6.5 6.5 0 1 1 9.5 3Zm0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9Z" />
-                            </svg>
-                        </span>
-                        <input type="text" id="search-input" placeholder="Estação, ID ou Chamado" autocomplete="off">
-                    </label>
-                    <button id="search-btn" type="button">Consultar Chamado</button>
-                    <div id="status-sync"></div>
-                </div>
-                <div id="status-search"></div>
-
-                <!-- Dashboard & Filtros -->
-                <div class="dashboard-panel" id="dashboard-panel" style="display: none;">
-                    <div class="stat-box">
-                        <span class="stat-label">Encontrados</span>
-                        <span class="stat-value" id="stat-total">0</span>
+                <div class="search-section">
+                    <div class="search-box">
+                        <label class="search-field" for="search-input">
+                            <span class="search-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" focusable="false">
+                                    <path d="M9.5 3a6.5 6.5 0 0 1 5.18 10.43l4.45 4.44a1 1 0 0 1-1.42 1.42l-4.44-4.45A6.5 6.5 0 1 1 9.5 3Zm0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9Z" />
+                                </svg>
+                            </span>
+                            <input type="text" id="search-input" placeholder="Estação, ID ou Chamado" autocomplete="off">
+                        </label>
+                        <button id="search-btn" type="button">Consultar Chamado</button>
+                        <div id="status-sync"></div>
                     </div>
-                    <div class="stat-box stat-ok">
-                        <span class="stat-label">Aprovados</span>
-                        <span class="stat-value" id="stat-ok">0</span>
-                    </div>
-                    <div class="stat-box stat-bad">
-                        <span class="stat-label">Bloqueados</span>
-                        <span class="stat-value" id="stat-bad">0</span>
-                    </div>
-                </div>
+                    <div id="status-search"></div>
 
-                <div class="filters-panel" id="filters-panel" style="display: none;">
-                    <button class="filter-chip active" data-filter="all">Todos</button>
-                    <button class="filter-chip" data-filter="approved">Aprovados</button>
-                    <button class="filter-chip" data-filter="blocked">Bloqueados</button>
-                </div>
+                    <div class="dashboard-panel" id="dashboard-panel" style="display: none;">
+                        <div class="stat-box">
+                            <span class="stat-label">Encontrados</span>
+                            <span class="stat-value" id="stat-total">0</span>
+                        </div>
+                        <div class="stat-box stat-ok">
+                            <span class="stat-label">Aprovados</span>
+                            <span class="stat-value" id="stat-ok">0</span>
+                        </div>
+                        <div class="stat-box stat-bad">
+                            <span class="stat-label">Bloqueados</span>
+                            <span class="stat-value" id="stat-bad">0</span>
+                        </div>
+                    </div>
 
-                <div id="loading-spinner-container"></div>
-                <div id="loading-text" class="saving-text">Sincronizando base de dados...</div>
+                    <div class="filters-panel" id="filters-panel" style="display: none;">
+                        <button class="filter-chip active" data-filter="all">Todos</button>
+                        <button class="filter-chip" data-filter="approved">Aprovados</button>
+                        <button class="filter-chip" data-filter="blocked">Bloqueados</button>
+                    </div>
+
+                    <div id="loading-spinner-container"></div>
+                    <div id="loading-text" class="saving-text">Sincronizando base de dados...</div>
+                </div>
             </div>
-        </div>
 
-        <div class="results-area" id="results-list">
-            <!-- Cards serão inseridos aqui pelo JS -->
-        </div>
-    </main>
+            <div class="results-area" id="results-list">
+                <!-- Cards serão inseridos aqui pelo JS -->
+            </div>
+        </main>
+    </div>
 
+    <!-- ===== TELA: DETALHE (ticket) ===== -->
+    <div id="screen-detail" hidden>
+        <main class="detail-page" id="detail-view">
+            <section class="ticket-card ticket-split" id="ticket-wrapper">
+                <button class="sr-only-action" id="copy-all-btn" type="button" aria-label="Copiar todos os dados"></button>
+                <div class="ticket-half ticket-half--top">
+                    <div class="ticket-top-content">
+                    <div class="ticket-site-code" id="ticket-site-code">TEMGBHO0027</div>
+                    <div class="ticket-metrics">
+                        <div class="metric">
+                            <span class="metric-label"><span class="material-symbols-outlined">location_on</span> Estação</span>
+                            <span class="metric-value" id="detail-location">EMG0010</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label"><span class="material-symbols-outlined">build</span> Acesso</span>
+                            <span class="metric-value" id="detail-access-type">Manutenção</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label"><span class="material-symbols-outlined">check_circle</span> Status</span>
+                            <span class="metric-value metric-value--status"><span class="status-dot" id="detail-status-dot"></span><span id="detail-status">Aprovado</span></span>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+
+                <div class="ticket-seam" aria-hidden="true">
+                    <div class="perforation">
+                        <span class="perforation-cutout"></span>
+                        <span class="perforation-line"></span>
+                        <span class="perforation-cutout"></span>
+                    </div>
+                </div>
+
+                <div class="ticket-half ticket-half--bottom">
+                <div class="ticket-lower ticket-bottom-content">
+                    <div class="status-stack">
+                        <span class="section-label"><span class="material-symbols-outlined">cell_tower</span> Endereço:</span>
+                        <a class="access-status-text address-link" id="ticket-address">Não informado</a>
+                    </div>
+                </div>
+                </div>
+            </section>
+
+            <section class="called-card" id="detail-obs-section">
+                <div class="called-card__top">
+                    <div class="called-card__titleblock">
+                        <span class="called-card__eyebrow">N° CHAMADO</span>
+                        <div class="called-number" id="detail-chamado">#00358519</div>
+                    </div>
+                    <button class="icon-btn icon-btn--soft" id="copy-chamado-btn" type="button" aria-label="Copiar chamado">
+                        <span class="material-symbols-outlined">content_copy</span>
+                    </button>
+                </div>
+
+                <div class="called-grid">
+                    <div class="called-meta">
+                        <span class="section-label">ID TBSA</span>
+                        <strong id="detail-id-tbsa">TEMGBHO0027</strong>
+                    </div>
+                    <div class="called-meta">
+                        <span class="section-label">ID Claro</span>
+                        <strong id="detail-id-claro">EMG0010</strong>
+                    </div>
+                </div>
+
+                <div class="obs-block">
+                    <span class="section-label">Observações</span>
+                    <p class="obs-text" id="detail-obs">Carta encaminhada ao local. Problemas de acesso, acionar o NOC TBSA.</p>
+                </div>
+            </section>
+        </main>
+
+        <nav class="detail-bottomnav">
+            <a href="#" class="bottomnav-item" id="nav-consulta">
+                <span class="material-symbols-outlined">search</span>
+                <span class="bottomnav-label">Consulta</span>
+            </a>
+            <a href="#" class="bottomnav-item active" id="nav-detail">
+                <span class="material-symbols-outlined" id="nav-detail-icon">confirmation_number</span>
+                <span class="bottomnav-label">Detalhe</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- ===== Elementos compartilhados ===== -->
     <div id="pwa-install-banner" class="glass pwa-banner" style="display: none;">
         <div class="pwa-banner-content">
             <div class="pwa-icon">
