@@ -430,6 +430,7 @@ body.dark-mode .perforation-line { border-top-color: rgba(255,255,255,.2); }
     width: 26px;
     height: 26px;
     border-radius: 50%;
+    flex-shrink: 0;
     background: #32a852;
     box-shadow: 0 0 0 4px rgba(50,168,82,.14);
 }
@@ -638,7 +639,8 @@ body.dark-mode .detail-bottomnav { background: rgba(15, 11, 12, 0.82); }
     .metric-label { font-size: .56rem; letter-spacing: .08em; }
     .metric-value { font-size: .82rem; overflow-wrap: break-word; }
     .metric-value--status { gap: 4px; }
-    .status-dot { width: 20px; height: 20px; box-shadow: 0 0 0 3px rgba(50,168,82,.14); }
+    .status-dot { width: 18px; height: 18px; box-shadow: 0 0 0 3px rgba(50,168,82,.14); }
+    .status-dot::after { font-size: 12px; }
     .status-dot.is-blocked { box-shadow: 0 0 0 3px rgba(194,65,65,.14); }
     .perforation { margin: 0; }
     .access-status-text { font-size: 1.55rem; }
