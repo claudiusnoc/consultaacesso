@@ -267,7 +267,7 @@ body {
     font-weight: 500;
     letter-spacing: .01em;
     color: var(--text);
-    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 .metric-value--status {
@@ -636,7 +636,7 @@ body.dark-mode .detail-bottomnav { background: rgba(15, 11, 12, 0.82); }
     .metric:first-child { padding-left: 0; }
     .metric:last-child { padding-right: 0; }
     .metric-label { font-size: .56rem; letter-spacing: .08em; }
-    .metric-value { font-size: .88rem; word-break: break-word; }
+    .metric-value { font-size: .82rem; overflow-wrap: break-word; }
     .metric-value--status { gap: 4px; }
     .status-dot { width: 20px; height: 20px; box-shadow: 0 0 0 3px rgba(50,168,82,.14); }
     .status-dot.is-blocked { box-shadow: 0 0 0 3px rgba(194,65,65,.14); }
