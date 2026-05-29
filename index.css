@@ -959,3 +959,35 @@ footer {
         scroll-behavior: auto !important;
     }
 }
+
+/* ════════════════════════════════════════
+   View Transitions API — cross-document
+   ════════════════════════════════════════ */
+
+@view-transition {
+    navigation: auto;
+}
+
+/* fade + scale out on leaving page */
+::view-transition-old(root) {
+    animation: 200ms ease-out both viewOut;
+}
+
+/* fade + translate in on entering page */
+::view-transition-new(root) {
+    animation: 300ms ease-out both viewIn;
+}
+
+@keyframes viewOut {
+    to {
+        opacity: 0;
+        transform: scale(0.98);
+    }
+}
+
+@keyframes viewIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+}

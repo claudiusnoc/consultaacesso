@@ -675,3 +675,18 @@ body.dark-mode .detail-bottomnav { background: rgba(15, 11, 12, 0.82); }
     .called-grid { grid-template-columns: 1fr; }
     .bottomnav-item { flex-basis: 128px; }
 }
+
+/* ════════════════════════════════════════
+   Subtle card→ticket echo — site-code growth
+   ════════════════════════════════════════ */
+
+.ticket-site-code {
+    animation: siteCodeGrow 500ms ease-out both;
+}
+
+@keyframes siteCodeGrow {
+    from {
+        transform: scale(0.85);
+        opacity: 0.9;
+    }
+}
