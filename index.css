@@ -703,7 +703,7 @@ footer {
     left: 0;
     right: 0;
     bottom: 34px;
-    z-index: 40;
+    z-index: 0;
     display: flex;
     justify-content: center;
     pointer-events: none;
