@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Detalhe do Chamado - EQS</title>
+    <meta name="theme-color" content="#1a1a2e">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="logo-eqs.webp">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Manrope:wght@500;600;700;800&family=Bebas+Neue&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="detail.css">
+</head>
+
+<body>
+    <input type="checkbox" id="theme-check" class="theme-check" aria-hidden="true" tabindex="-1">
+
+    <main class="detail-page" id="detail-view">
+        <section class="ticket-card ticket-split" id="ticket-wrapper">
+            <button class="sr-only-action" id="copy-all-btn" type="button" aria-label="Copiar todos os dados"></button>
+            <div class="ticket-half ticket-half--top">
+                <div class="ticket-top-content">
+                <div class="ticket-site-code" id="ticket-site-code">TEMGBHO0027</div>
+
+                <div class="ticket-metrics">
+                    <div class="metric">
+                        <span class="metric-label"><span class="material-symbols-outlined">location_on</span> Estação</span>
+                        <span class="metric-value" id="detail-location">EMG0010</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label"><span class="material-symbols-outlined">build</span> Acesso</span>
+                        <span class="metric-value" id="detail-access-type">Manutenção</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label"><span class="material-symbols-outlined">check_circle</span> Status</span>
+                        <span class="metric-value metric-value--status"><span class="status-dot" id="detail-status-dot"></span><span id="detail-status">Aprovado</span></span>
+                    </div>
+                </div>
+                </div>
+            </div>
+
+            <div class="ticket-seam" aria-hidden="true">
+                <div class="perforation">
+                    <span class="perforation-cutout"></span>
+                    <span class="perforation-line"></span>
+                    <span class="perforation-cutout"></span>
+                </div>
+            </div>
+
+            <div class="ticket-half ticket-half--bottom">
+            <div class="ticket-lower ticket-bottom-content">
+                <div class="status-stack">
+                    <span class="section-label"><span class="material-symbols-outlined">build</span> Status</span>
+                    <strong class="access-status-text" id="ticket-access-status">Acesso ao Site</strong>
+                    <span class="status-date" id="detail-date">31/05/2026</span>
+                </div>
+
+            </div>
+            </div>
+        </section>
+
+        <section class="called-card" id="detail-obs-section">
+            <div class="called-card__top">
+                <div class="called-card__titleblock">
+                    <span class="called-card__eyebrow">N° CHAMADO</span>
+                    <div class="called-number" id="detail-chamado">#00358519</div>
+                </div>
+                <button class="icon-btn icon-btn--soft" id="copy-chamado-btn" type="button" aria-label="Copiar chamado">
+                    <span class="material-symbols-outlined">content_copy</span>
+                </button>
+            </div>
+
+            <div class="called-grid">
+                <div class="called-meta">
+                    <span class="section-label">ID TBSA</span>
+                    <strong id="detail-id-tbsa">TEMGBHO0027</strong>
+                </div>
+                <div class="called-meta">
+                    <span class="section-label">ID Claro</span>
+                    <strong id="detail-id-claro">EMG0010</strong>
+                </div>
+            </div>
+
+            <div class="obs-block">
+                <span class="section-label">Observações</span>
+                <p class="obs-text" id="detail-obs">Carta encaminhada ao local. Problemas de acesso, acionar o NOC TBSA.</p>
+            </div>
+        </section>
+    </main>
+
+    <nav class="detail-bottomnav">
+        <a href="index.html" class="bottomnav-item" id="nav-consulta">
+            <span class="material-symbols-outlined">search</span>
+            <span class="bottomnav-label">Consulta</span>
+        </a>
+        <a href="#" class="bottomnav-item active" id="nav-detail">
+            <span class="material-symbols-outlined" id="nav-detail-icon">confirmation_number</span>
+            <span class="bottomnav-label">Detalhe</span>
+        </a>
+    </nav>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="detail.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Consulta de Sites - EQS</title>
+    <meta name="theme-color" content="#f4f2ed">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="logo-eqs.webp">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+    <div class="toggle-wrap">
+        <input type="checkbox" id="theme-check">
+        <label for="theme-check" class="toggle-label" aria-label="Alterar Tema">
+            <span class="toggle-knob"></span>
+        </label>
+    </div>
+
+    <main class="main-container" id="main-container">
+        <div class="hero-glass">
+            <header>
+                <h1>Consulta de Chamados TBSA</h1>
+            </header>
+
+            <div class="search-section">
+                <div class="search-box">
+                    <label class="search-field" for="search-input">
+                        <span class="search-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" focusable="false">
+                                <path d="M9.5 3a6.5 6.5 0 0 1 5.18 10.43l4.45 4.44a1 1 0 0 1-1.42 1.42l-4.44-4.45A6.5 6.5 0 1 1 9.5 3Zm0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9Z" />
+                            </svg>
+                        </span>
+                        <input type="text" id="search-input" placeholder="Estação, ID ou Chamado" autocomplete="off">
+                    </label>
+                    <button id="search-btn" type="button">Consultar Chamado</button>
+                    <div id="status-sync"></div>
+                </div>
+                <div id="status-search"></div>
+
+                <!-- Dashboard & Filtros -->
+                <div class="dashboard-panel" id="dashboard-panel" style="display: none;">
+                    <div class="stat-box">
+                        <span class="stat-label">Encontrados</span>
+                        <span class="stat-value" id="stat-total">0</span>
+                    </div>
+                    <div class="stat-box stat-ok">
+                        <span class="stat-label">Aprovados</span>
+                        <span class="stat-value" id="stat-ok">0</span>
+                    </div>
+                    <div class="stat-box stat-bad">
+                        <span class="stat-label">Bloqueados</span>
+                        <span class="stat-value" id="stat-bad">0</span>
+                    </div>
+                </div>
+
+                <div class="filters-panel" id="filters-panel" style="display: none;">
+                    <button class="filter-chip active" data-filter="all">Todos</button>
+                    <button class="filter-chip" data-filter="approved">Aprovados</button>
+                    <button class="filter-chip" data-filter="blocked">Bloqueados</button>
+                </div>
+
+                <div id="loading-spinner-container"></div>
+                <div id="loading-text" class="saving-text">Sincronizando base de dados...</div>
+            </div>
+        </div>
+
+        <div class="results-area" id="results-list">
+            <!-- Cards serão inseridos aqui pelo JS -->
+        </div>
+    </main>
+
+    <div id="pwa-install-banner" class="glass pwa-banner" style="display: none;">
+        <div class="pwa-banner-content">
+            <div class="pwa-icon">
+                <img src="logo-eqs.webp" alt="EQS" style="width: 28px; height: 28px; object-fit: contain;">
+            </div>
+            <div class="pwa-text">
+                <strong>App EQS</strong>
+                <span>Instalar na tela inicial</span>
+            </div>
+        </div>
+        <div class="pwa-actions">
+            <button id="pwa-close" aria-label="Fechar">&#10005;</button>
+            <button id="pwa-install">INSTALAR</button>
+        </div>
+    </div>
+
+    <footer>
+        <img src="logo-eqs.webp" alt="EQS Engenharia" class="footer-logo">
+    </footer>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
