@@ -8,11 +8,11 @@ const CONFIG = {
 
 // Fallback data
 const OFFLINE_DATA = [
-    { "c": "00358519", "t": "TEMGBHO0027", "l": "EMG0010", "f": "2026-05-31", "o": "Carta encaminhada ao local. Problemas de acesso, acionar o NOC TBSA." },
-    { "c": "00358516", "t": "TEMGBHO0004", "l": "EMG0135", "f": "2026-05-31", "o": "Necessário retirar a chave na Claro." },
-    { "c": "00358565", "t": "TEMGDIV0002", "l": "EMG0349", "f": "2026-05-31", "o": "Direcionar os técnicos com a carta de liberação em mãos." },
-    { "c": "00358008", "t": "TCMGACA0001", "l": "MGACA01", "f": "2026-05-30", "o": "Apresentação apenas do chamado na Central da Claro." },
-    { "c": "00358009", "t": "TCMGACA0002", "l": "MGACAR1", "f": "2026-05-30", "o": "Uso do APP MASTER LOCK VAULT ENTERPRISE." }
+    { "c": "00358519", "t": "TEMGBHO0027", "l": "EMG0010", "f": "2026-05-31", "o": "Carta encaminhada ao local. Problemas de acesso, acionar o NOC TBSA.", "e": "Rua exemplo, bairro exemplo - Belo Horizonte/MG" },
+    { "c": "00358516", "t": "TEMGBHO0004", "l": "EMG0135", "f": "2026-05-31", "o": "Necessário retirar a chave na Claro.", "e": "Não informado" },
+    { "c": "00358565", "t": "TEMGDIV0002", "l": "EMG0349", "f": "2026-05-31", "o": "Direcionar os técnicos com a carta de liberação em mãos.", "e": "Rua exemplo, bairro exemplo - Divinópolis/MG" },
+    { "c": "00358008", "t": "TCMGACA0001", "l": "MGACA01", "f": "2026-05-30", "o": "Apresentação apenas do chamado na Central da Claro.", "e": "Rua exemplo, bairro exemplo - Acaiaca/MG" },
+    { "c": "00358009", "t": "TCMGACA0002", "l": "MGACAR1", "f": "2026-05-30", "o": "Uso do APP MASTER LOCK VAULT ENTERPRISE.", "e": "Rua exemplo, bairro exemplo - Acaiaca/MG" }
 ];
 
 let dataStore = [];
@@ -133,7 +133,8 @@ async function fetchRemoteData(silent) {
             l: item['ID CLARO'] || '',
             f: item['FIM ACESSO'] || '',
             s: item['STATUS'] || '',
-            o: item['OBSERVAÇÕES'] || ''
+            o: item['OBSERVAÇÕES'] || '',
+            e: item['ENDERECO'] || ''
         }));
 
         setCachedData(dataStore);

@@ -412,6 +412,33 @@ body.dark-mode .perforation-line { border-top-color: rgba(255,255,255,.2); }
     color: var(--text);
 }
 
+.address-link,
+.address-link:link,
+.address-link:visited,
+.address-link:hover,
+.address-link:active {
+    text-decoration: none;
+    color: var(--text);
+    border-bottom: 0;
+    box-shadow: none;
+    -webkit-text-decoration: none;
+    text-decoration-line: none;
+}
+
+.address-link {
+    cursor: default;
+}
+
+.address-link[href] {
+    cursor: pointer;
+}
+
+.address-link:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+    border-radius: 8px;
+}
+
 .status-pill {
     display: inline-flex;
     align-items: center;

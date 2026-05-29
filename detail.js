@@ -6,13 +6,12 @@ const els = {
     accessType: document.getElementById('detail-access-type'),
     status: document.getElementById('detail-status'),
     statusDot: document.getElementById('detail-status-dot'),
-    accessStatus: document.getElementById('ticket-access-status'),
+    address: document.getElementById('ticket-address'),
     chamado: document.getElementById('detail-chamado'),
     obs: document.getElementById('detail-obs'),
     obsSection: document.getElementById('detail-obs-section'),
     idTbsa: document.getElementById('detail-id-tbsa'),
     idClaro: document.getElementById('detail-id-claro'),
-    date: document.getElementById('detail-date'),
     copyChamado: document.getElementById('copy-chamado-btn'),
     copyAll: document.getElementById('copy-all-btn'),
     toast: document.getElementById('toast'),
@@ -43,7 +42,8 @@ function getTicketData() {
         l: 'EMG0010',
         f: '2026-05-31',
         s: 'Aprovado',
-        o: 'Carta encaminhada ao local. Problemas de acesso, acionar o NOC TBSA.'
+        o: 'Carta encaminhada ao local. Problemas de acesso, acionar o NOC TBSA.',
+        e: 'Rua exemplo, bairro exemplo - Belo Horizonte/MG'
     };
 }
 
@@ -71,6 +71,15 @@ function showToast(message, duration = 2400) {
     els.toast.classList.add('show');
     clearTimeout(showToast._timer);
     showToast._timer = setTimeout(() => els.toast.classList.remove('show'), duration);
+}
+
+function hasValidAddress(address) {
+    const value = (address || '').trim();
+    return value !== '' && value.toLowerCase() !== 'não informado' && value.toLowerCase() !== 'nao informado';
+}
+
+function buildMapsSearchUrl(address) {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address.trim())}`;
 }
 
 async function copyText(text, successMessage, errorMessage) {
@@ -105,9 +114,24 @@ function populatePage(data) {
     els.location.textContent = data.l || '--';
     els.accessType.textContent = 'Manutenção';
     els.status.textContent = statusLabel;
-    els.accessStatus.textContent = isBlocked ? 'Acesso Indisponível' : 'Acesso ao Site';
+    const address = data.e || 'Não informado';
+    els.address.textContent = address;
+
+    if (hasValidAddress(address)) {
+        els.address.href = buildMapsSearchUrl(address);
+        els.address.target = '_blank';
+        els.address.rel = 'noopener noreferrer';
+        els.address.removeAttribute('aria-disabled');
+        els.address.tabIndex = 0;
+    } else {
+        els.address.removeAttribute('href');
+        els.address.removeAttribute('target');
+        els.address.removeAttribute('rel');
+        els.address.setAttribute('aria-disabled', 'true');
+        els.address.tabIndex = -1;
+    }
+
     els.statusDot.classList.toggle('is-blocked', isBlocked);
-    els.date.textContent = formatDate(data.f);
     els.chamado.textContent = `#${data.c || '--'}`;
     els.idTbsa.textContent = data.t || '--';
     els.idClaro.textContent = data.l || '--';
@@ -126,13 +150,13 @@ function populatePage(data) {
     }
 
     window._ticketData = data;
-    window._dateDisplay = els.date.textContent;
+    window._dateDisplay = formatDate(data.f);
     window._statusLabel = statusLabel;
     window._isBlocked = isBlocked;
 }
 
 function buildCopyAllText(data) {
-    return `CHAMADO #${data.c || '--'} | TBSA: ${data.t || '--'} | CLARO: ${data.l || '--'} | VÁLIDO ATÉ ${window._dateDisplay || '--/--/----'} | STATUS: ${window._statusLabel || '--'} | OBS: ${data.o || 'Sem observações.'}`;
+    return `CHAMADO #${data.c || '--'} | TBSA: ${data.t || '--'} | CLARO: ${data.l || '--'} | ENDERECO: ${data.e || 'Não informado'} | VÁLIDO ATÉ ${window._dateDisplay || '--/--/----'} | STATUS: ${window._statusLabel || '--'} | OBS: ${data.o || 'Sem observações.'}`;
 }
 
 function playTicketCopyAnimation() {
