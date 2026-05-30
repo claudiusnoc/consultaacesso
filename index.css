@@ -1,4 +1,6 @@
 :root {
+    --app-zoom: 0.75;
+    --light-strong-border: rgba(18, 21, 28, 0.72);
     --page-bg: #f4f2ed;
     --glass-bg: rgba(255, 255, 255, 0.58);
     --panel-bg: rgba(255, 255, 255, 0.76);
@@ -225,6 +227,10 @@ img {
     box-shadow: var(--shadow-soft);
 }
 
+body:not(.dark-mode) .hero-glass {
+    border-color: var(--light-strong-border);
+}
+
 .hero-glass::before {
     content: '';
     position: absolute;
@@ -345,7 +351,8 @@ button#search-btn,
     text-transform: uppercase;
     letter-spacing: 0.14em;
     font: 800 clamp(1.25rem, 4vw, 1.75rem)/1 'Inter', sans-serif;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+    transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.2s ease, opacity 0.2s ease;
+    touch-action: manipulation;
 }
 
 button#search-btn,
@@ -364,7 +371,7 @@ button#search-btn:hover,
 button#search-btn:active,
 .detail-btn:active,
 .copy-btn:active {
-    transform: translateY(0) scale(0.99);
+    transform: translateY(0) scale(0.975);
     box-shadow: 0 9px 18px rgba(86, 18, 20, 0.24), 0 3px 8px rgba(86, 18, 20, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
@@ -474,12 +481,18 @@ button#search-btn:active,
     border-radius: var(--radius-pill);
     font: 700 13px/1 'Inter', sans-serif;
     cursor: pointer;
-    transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    min-height: 44px;
+    transition: transform 0.16s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    touch-action: manipulation;
 }
 
 .filter-chip:hover {
     transform: translateY(-1px);
     color: var(--text-main);
+}
+
+.filter-chip:active {
+    transform: translateY(0) scale(0.97);
 }
 
 .filter-chip.active {
@@ -515,7 +528,7 @@ button#search-btn:active,
 }
 
 .card-animate {
-    animation: fadeInUp 0.45s cubic-bezier(0.175, 0.885, 0.32, 1) both;
+    animation: fadeInUp 0.34s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 @keyframes fadeInUp {
@@ -628,24 +641,48 @@ body:not(.dark-mode) .badge-overdue {
 .skeleton-glass {
     min-height: 152px;
     border-radius: 24px;
-    background: linear-gradient(90deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.24) 50%, rgba(255, 255, 255, 0.08) 100%);
-    background-size: 200% 100%;
-    animation: shimmerGlass 1.8s linear infinite;
+    background: rgba(255, 255, 255, 0.12);
     border: 1px solid rgba(255, 255, 255, 0.18);
+    overflow: hidden;
+    position: relative;
+}
+
+@supports (zoom: 1) {
+    .main-container,
+    .detail-page,
+    .detail-bottomnav,
+    .toggle-wrap,
+    .pwa-banner,
+    .toast,
+    footer {
+        zoom: var(--app-zoom);
+    }
+}
+
+.skeleton-glass::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.24) 50%, transparent 100%);
+    transform: translateX(-100%);
+    animation: shimmerGlass 1.5s linear infinite;
 }
 
 .dark-mode .skeleton-glass {
-    background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.12) 50%, rgba(255, 255, 255, 0.05) 100%);
-    background-size: 200% 100%;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.dark-mode .skeleton-glass::before {
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.12) 50%, transparent 100%);
 }
 
 @keyframes shimmerGlass {
     from {
-        background-position: -200% 0;
+        transform: translateX(-100%);
     }
 
     to {
-        background-position: 200% 0;
+        transform: translateX(100%);
     }
 }
 
@@ -702,7 +739,7 @@ footer {
     position: fixed;
     left: 0;
     right: 0;
-    bottom: 34px;
+    bottom: 132px;
     z-index: 0;
     display: flex;
     justify-content: center;
@@ -713,8 +750,8 @@ footer {
 .footer-logo {
     height: 38px;
     width: auto;
-    opacity: 0.95;
-    filter: grayscale(1) brightness(0.35) drop-shadow(0 6px 12px rgba(31, 38, 48, 0.10));
+    opacity: 0.72;
+    filter: saturate(1.08) drop-shadow(0 6px 12px rgba(31, 38, 48, 0.10));
 }
 
 .pwa-banner {
@@ -948,6 +985,10 @@ footer {
 
     .footer-logo {
         height: 32px;
+    }
+
+    footer {
+        bottom: 136px;
     }
 }
 

@@ -139,13 +139,19 @@ function buildCopyAllText(data) {
 function playTicketCopyAnimation() {
     const wrapper = DetailEls.ticketWrapper;
     if (!wrapper) return;
+    const finishAnimation = () => {
+        wrapper.classList.remove('ticket-copy-feedback');
+        wrapper.removeEventListener('animationend', handleAnimationEnd);
+    };
+    const handleAnimationEnd = (event) => {
+        if (event.target === wrapper) finishAnimation();
+    };
     wrapper.classList.remove('ticket-copy-feedback');
     void wrapper.offsetWidth;
     wrapper.classList.add('ticket-copy-feedback');
     clearTimeout(playTicketCopyAnimation._timer);
-    playTicketCopyAnimation._timer = setTimeout(() => {
-        wrapper.classList.remove('ticket-copy-feedback');
-    }, 660);
+    wrapper.addEventListener('animationend', handleAnimationEnd);
+    playTicketCopyAnimation._timer = setTimeout(finishAnimation, 1200);
 }
 
 // ════════════════════════════════════════
@@ -462,7 +468,7 @@ function handleSearch() {
     finalResults.forEach((item, index) => {
         const card = createCard(item);
         card.classList.add('card-animate');
-        card.style.animationDelay = `${index * 0.05}s`;
+        card.style.animationDelay = `${Math.min(index, 6) * 0.04}s`;
         Elements.resultsList.appendChild(card);
     });
 }
