@@ -1,10 +1,51 @@
+@font-face {
+  font-family: "Archivo";
+  src: url("fonts/archivo-latin-wght-normal.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 300 800;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Barlow";
+  src: url("fonts/barlow-latin-400-normal.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Barlow";
+  src: url("fonts/barlow-latin-500-normal.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Barlow";
+  src: url("fonts/barlow-latin-600-normal.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Barlow";
+  src: url("fonts/barlow-latin-700-normal.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
 :root {
-  font-family: Arial, "Helvetica Neue", sans-serif;
+  font-family: "Archivo", Arial, "Helvetica Neue", sans-serif;
   color: #172033;
   background: #f4f5f7;
   font-synthesis: none;
-  --font-ui: Arial, "Helvetica Neue", sans-serif;
-  --font-display: "DIN Alternate", "DIN", Barlow, Arial, sans-serif;
+  --font-ui: "Archivo", Arial, "Helvetica Neue", sans-serif;
+  --font-display: "Archivo", Arial, sans-serif;
+  --font-utility: "Barlow", Arial, sans-serif;
   --claro: #d52b1e;
   --claro-strong: #a8201a;
   --claro-soft: rgba(213, 43, 30, 0.1);
@@ -119,6 +160,10 @@ body.showing-detail #screen-detail { display: block; }
   letter-spacing: .13em;
   line-height: 1.2;
   text-transform: uppercase;
+}
+.eyebrow, .section-kicker, .result-card__ticket, .metric-label, .section-label,
+.stat-label, .result-card__meta, .result-status, .detail-status-badge {
+  font-family: var(--font-utility);
 }
 .hero-copy h1 { max-width: 560px; margin: 10px 0 12px; font-family: var(--font-display); font-size: clamp(2.6rem, 6vw, 4.8rem); line-height: .98; letter-spacing: -.045em; }
 .hero-lede { margin: 0; color: var(--muted); font-size: clamp(1rem, 1.7vw, 1.18rem); }
