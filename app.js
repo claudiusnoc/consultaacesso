@@ -306,18 +306,7 @@ async function fetchRemoteData(silent) {
     const timeoutId = setTimeout(() => controller.abort(), CONFIG.FETCH_TIMEOUT);
 
     try {
-        let response;
-        try {
-            response = await fetch(CONFIG.CSV_URL, { signal: controller.signal });
-        } catch (e) {
-            console.warn('Tentando via corsproxy.io...');
-            try {
-                response = await fetch(`https://corsproxy.io/?${encodeURIComponent(CONFIG.CSV_URL)}`, { signal: controller.signal });
-            } catch (e2) {
-                console.warn('Tentando via allorigins...');
-                response = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(CONFIG.CSV_URL)}`);
-            }
-        }
+        const response = await fetch(CONFIG.CSV_URL, { signal: controller.signal });
 
         if (!response || !response.ok) throw new Error('Falha no download');
 
@@ -342,12 +331,12 @@ async function fetchRemoteData(silent) {
     } catch (error) {
         clearTimeout(timeoutId);
         if (!silent) {
-            dataStore = OFFLINE_DATA;
+            dataStore = [];
             Elements.statusSync.innerHTML = `
                 <div class="status-sync-fail">
-                    <strong>Sincronização Indisponível</strong><br>
-                    Os servidores de proxy falharam.<br>
-                    <small>Exibindo amostra de sites de backup offline.</small>
+                    <strong>Base de chamados indisponível</strong><br>
+                    Não foi possível carregar o arquivo de dados publicado.<br>
+                    <small>Tente novamente em alguns instantes.</small>
                 </div>
             `;
         }
