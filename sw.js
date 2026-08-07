@@ -7,7 +7,12 @@ const ASSETS = [
     './chamados.csv',
     './manifest.json',
     './logo-eqs.webp',
-    './logo-eqs-dark.png'
+    './logo-eqs-dark.png',
+    './fonts/archivo-latin-wght-normal.woff2',
+    './fonts/barlow-latin-400-normal.woff2',
+    './fonts/barlow-latin-500-normal.woff2',
+    './fonts/barlow-latin-600-normal.woff2',
+    './fonts/barlow-latin-700-normal.woff2'
 ];
 
 self.addEventListener('install', (event) => {
