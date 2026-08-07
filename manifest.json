@@ -4,8 +4,8 @@
   "description": "Consulta de chamados TBSA para técnicos em campo",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#1a1a2e",
-  "theme_color": "#1a1a2e",
+  "background_color": "#171b24",
+  "theme_color": "#171b24",
   "orientation": "portrait",
   "icons": [
     {

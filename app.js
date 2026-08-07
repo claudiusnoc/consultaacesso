@@ -42,10 +42,11 @@ const DetailEls = {
     statusDot: document.getElementById('detail-status-dot'),
     address: document.getElementById('ticket-address'),
     chamado: document.getElementById('detail-chamado'),
+    date: document.getElementById('detail-date'),
+    cluster: document.getElementById('detail-cluster'),
+    supervisor: document.getElementById('detail-supervisor'),
     obs: document.getElementById('detail-obs'),
     obsSection: document.getElementById('detail-obs-section'),
-    idTbsa: document.getElementById('detail-id-tbsa'),
-    idClaro: document.getElementById('detail-id-claro'),
     copyChamado: document.getElementById('copy-chamado-btn'),
     copyAll: document.getElementById('copy-all-btn'),
     ticketWrapper: document.getElementById('ticket-wrapper'),
@@ -182,6 +183,7 @@ function populatePage(data) {
     DetailEls.siteCode.textContent = data.t || '--';
     DetailEls.location.textContent = data.l || '--';
     DetailEls.accessType.textContent = 'Manutenção';
+    if (DetailEls.date) DetailEls.date.textContent = formatDate(data.f);
     DetailEls.status.textContent = statusLabel;
     const address = data.e || 'Não informado';
     DetailEls.address.textContent = address;
@@ -202,8 +204,8 @@ function populatePage(data) {
 
     DetailEls.statusDot.classList.toggle('is-blocked', isBlocked);
     DetailEls.chamado.textContent = `#${data.c || '--'}`;
-    DetailEls.idTbsa.textContent = data.t || '--';
-    DetailEls.idClaro.textContent = data.l || '--';
+    if (DetailEls.cluster) DetailEls.cluster.textContent = data.cluster || 'Não informado';
+    if (DetailEls.supervisor) DetailEls.supervisor.textContent = data.supervisor || 'Não informado';
 
     if (data.o) {
         DetailEls.obs.textContent = data.o;
@@ -281,6 +283,8 @@ async function fetchData() {
     const cached = getCachedData();
     if (cached) {
         dataStore = cached;
+        Elements.spinnerContainer.style.display = 'none';
+        Elements.loadingText.style.display = 'none';
         Elements.statusSync.innerHTML = '<span class="status-sync-ok">● Dados carregados do cache</span>';
         fetchRemoteData(true);
         return;
@@ -471,11 +475,41 @@ function handleSearch() {
     }
 
     finalResults.forEach((item, index) => {
-        const card = createCard(item);
+        const card = createModernCard(item);
         card.classList.add('card-animate');
         card.style.animationDelay = `${Math.min(index, 6) * 0.04}s`;
         Elements.resultsList.appendChild(card);
     });
+}
+
+function createModernCard(item) {
+    const card = document.createElement('article');
+    card.className = 'result-card';
+    const isOverdue = checkIfOverdue(item.f);
+    const dateDisplay = formatDisplayDate(item.f);
+    const status = (item.s || '').trim().toLowerCase();
+    const isApproved = status === 'aprovado' || status === '';
+    const isBlocked = isOverdue || !isApproved;
+    const statusLabel = isOverdue ? 'Vencido' : (isApproved ? 'Liberado' : (item.s || 'Pendente'));
+    const itemJson = JSON.stringify(item).replace(/'/g, "&#39;");
+
+    card.innerHTML = `
+        <div class="result-card__top">
+            <div class="result-card__identity">
+                <span class="result-card__ticket">Chamado #${escapeHTML(item.c)}</span>
+                <h3>${escapeHTML(item.t)}</h3>
+                <p>Site ${escapeHTML(item.l)}</p>
+            </div>
+            <span class="result-status ${isBlocked ? 'is-blocked' : 'is-approved'}">${escapeHTML(statusLabel)}</span>
+        </div>
+        <div class="result-card__meta">
+            <span><small>Validade</small><strong>${escapeHTML(dateDisplay)}</strong></span>
+            <span><small>Cluster</small><strong>${escapeHTML(item.cluster || 'Não informado')}</strong></span>
+        </div>
+        ${item.o ? `<p class="result-card__note">${escapeHTML(item.o)}</p>` : ''}
+        <button class="detail-btn ${isBlocked ? 'is-blocked' : ''}" data-detail='${itemJson}' type="button">Ver detalhes</button>
+    `;
+    return card;
 }
 
 function createCard(item) {
