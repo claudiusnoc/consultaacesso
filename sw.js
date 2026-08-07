@@ -1,61 +1,43 @@
-const CACHE_NAME = 'eqs-consulta-v7';
+const CACHE_NAME = 'eqs-consulta-v8';
 const ASSETS = [
     './',
     './index.html',
     './index.css',
     './app.js',
-    './detail.css',
-    './fundo.webp',
+    './chamados.csv',
+    './manifest.json',
     './logo-eqs.webp',
-    'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Outfit:wght@500;700;800&family=Manrope:wght@500;600;700;800&family=Bebas+Neue&display=swap',
-    'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap'
+    './logo-eqs-dark.png'
 ];
 
-// Instalar: cacheia assets estáticos
 self.addEventListener('install', (event) => {
-    event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll(ASSETS);
-        })
-    );
+    event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
     self.skipWaiting();
 });
 
-// Ativar: limpa caches antigos
 self.addEventListener('activate', (event) => {
     event.waitUntil(
-        caches.keys().then((keys) => {
-            return Promise.all(
-                keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-            );
-        })
+        caches.keys().then((keys) => Promise.all(
+            keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+        ))
     );
     self.clients.claim();
 });
 
-// Fetch: Network first para dados, Cache first para assets
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
-
-    // Requisições para Google Sheets ou proxies: sempre network
-    if (url.href.includes('docs.google.com') || url.href.includes('corsproxy.io') || url.href.includes('allorigins.win')) {
-        event.respondWith(
-            fetch(event.request).catch(() => caches.match(event.request))
-        );
+    if (url.pathname.endsWith('/chamados.csv') || url.pathname.endsWith('/app.js')) {
+        event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
         return;
     }
 
-    // Assets estáticos: cache first, fallback to network
     event.respondWith(
-        caches.match(event.request).then((cached) => {
-            return cached || fetch(event.request).then((response) => {
-                // Cache new assets dynamically
-                if (response.ok) {
-                    const clone = response.clone();
-                    caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-                }
-                return response;
-            });
-        })
+        caches.match(event.request).then((cached) => cached || fetch(event.request).then((response) => {
+            if (response.ok) {
+                const clone = response.clone();
+                caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+            }
+            return response;
+        }))
     );
 });

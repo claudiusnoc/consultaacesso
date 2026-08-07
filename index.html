@@ -3,192 +3,196 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Consulta de Sites - EQS</title>
-    <meta name="theme-color" content="#f4f2ed">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#f4f5f7">
+    <meta name="description" content="Consulta rápida de chamados TBSA para equipes em campo.">
+    <title>Consulta de Chamados TBSA</title>
     <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="logo-eqs.webp" type="image/webp">
     <link rel="apple-touch-icon" href="logo-eqs.webp">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;700;800&family=Manrope:wght@500;600;700;800&family=Bebas+Neue&display=swap"
-        rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="index.css?v=20260529-visual-sync-4">
-    <link rel="stylesheet" href="detail.css?v=20260529-visual-sync-4">
+    <link rel="stylesheet" href="index.css?v=20260807-redesign-1">
 </head>
 
 <body>
-    <!-- ===== Toggle tema (compartilhado) ===== -->
-    <div class="toggle-wrap">
-        <input type="checkbox" id="theme-check">
-        <label for="theme-check" class="toggle-label" aria-label="Alterar Tema">
-            <span class="toggle-knob"></span>
-        </label>
-    </div>
-
-    <!-- ===== TELA: CONSULTA (index) ===== -->
     <div id="screen-index">
-        <main class="main-container" id="main-container">
-            <div class="hero-glass">
-                <header>
-                    <h1>Consulta de Chamados TBSA</h1>
-                </header>
+        <header class="topbar">
+            <a class="brand" href="index.html" aria-label="Consulta de chamados TBSA">
+                <img src="logo-eqs.webp" alt="EQS Engenharia">
+                <span class="brand-divider" aria-hidden="true"></span>
+                <span class="brand-copy">
+                    <strong>Consulta TBSA</strong>
+                    <small>Chamados de acesso</small>
+                </span>
+            </a>
 
-                <div class="search-section">
-                    <div class="search-box">
-                        <label class="search-field" for="search-input">
-                            <span class="search-icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24" focusable="false">
-                                    <path d="M9.5 3a6.5 6.5 0 0 1 5.18 10.43l4.45 4.44a1 1 0 0 1-1.42 1.42l-4.44-4.45A6.5 6.5 0 1 1 9.5 3Zm0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9Z" />
-                                </svg>
-                            </span>
-                            <input type="text" id="search-input" placeholder="Estação, ID ou Chamado" autocomplete="off">
-                        </label>
-                        <button id="search-btn" type="button">Consultar Chamado</button>
-                        <div id="status-sync"></div>
-                    </div>
-                    <div id="status-search"></div>
-
-                    <div class="dashboard-panel" id="dashboard-panel" style="display: none;">
-                        <div class="stat-box">
-                            <span class="stat-label">Encontrados</span>
-                            <span class="stat-value" id="stat-total">0</span>
-                        </div>
-                        <div class="stat-box stat-ok">
-                            <span class="stat-label">Aprovados</span>
-                            <span class="stat-value" id="stat-ok">0</span>
-                        </div>
-                        <div class="stat-box stat-bad">
-                            <span class="stat-label">Bloqueados</span>
-                            <span class="stat-value" id="stat-bad">0</span>
-                        </div>
-                    </div>
-
-                    <div class="filters-panel" id="filters-panel" style="display: none;">
-                        <button class="filter-chip active" data-filter="all">Todos</button>
-                        <button class="filter-chip" data-filter="approved">Aprovados</button>
-                        <button class="filter-chip" data-filter="blocked">Bloqueados</button>
-                    </div>
-
-                    <div id="loading-spinner-container"></div>
-                    <div id="loading-text" class="saving-text">Sincronizando base de dados...</div>
+            <div class="topbar-actions">
+                <span class="sync-compact" aria-hidden="true"></span>
+                <div class="theme-control">
+                    <input type="checkbox" id="theme-check">
+                    <label for="theme-check" aria-label="Alternar tema claro e escuro">
+                        <span class="theme-icon theme-icon-light">☼</span>
+                        <span class="theme-icon theme-icon-dark">◐</span>
+                        <span class="toggle-knob"></span>
+                    </label>
                 </div>
             </div>
+        </header>
 
-            <div class="results-area" id="results-list">
-                <!-- Cards serão inseridos aqui pelo JS -->
-            </div>
+        <main class="main-container" id="main-container">
+            <section class="hero-section" aria-labelledby="page-title">
+                <div class="hero-copy">
+                    <p class="eyebrow">Operação TBSA</p>
+                    <h1 id="page-title">Encontre um chamado em segundos.</h1>
+                    <p class="hero-lede">Consulte por número, site ou ID da detentora.</p>
+                </div>
+
+                <div class="search-section" aria-label="Consulta de chamados">
+                    <div class="search-box">
+                        <label class="search-field" for="search-input">
+                            <span class="search-mark" aria-hidden="true"></span>
+                            <span class="sr-only">Buscar chamado</span>
+                            <input type="search" id="search-input" placeholder="Chamado, site ou ID" autocomplete="off" enterkeyhint="search">
+                            <kbd>Enter</kbd>
+                        </label>
+                        <button id="search-btn" class="search-btn" type="button">Consultar</button>
+                    </div>
+                    <div id="status-sync" class="status-sync" role="status" aria-live="polite"></div>
+                    <div id="status-search" class="status-search" role="status" aria-live="polite"></div>
+                </div>
+            </section>
+
+            <section class="results-section" aria-live="polite">
+                <div class="results-heading">
+                    <div>
+                        <p class="section-kicker">Resultado da consulta</p>
+                        <h2>Chamados encontrados</h2>
+                    </div>
+                    <span class="results-hint">Abra um chamado para ver os detalhes</span>
+                </div>
+
+                <div class="dashboard-panel" id="dashboard-panel" style="display: none;">
+                    <div class="stat-box stat-total">
+                        <span class="stat-label">Encontrados</span>
+                        <strong class="stat-value" id="stat-total">0</strong>
+                    </div>
+                    <div class="stat-box stat-ok">
+                        <span class="stat-label">Liberados</span>
+                        <strong class="stat-value" id="stat-ok">0</strong>
+                    </div>
+                    <div class="stat-box stat-bad">
+                        <span class="stat-label">Pendentes</span>
+                        <strong class="stat-value" id="stat-bad">0</strong>
+                    </div>
+                </div>
+
+                <div class="filters-panel" id="filters-panel" style="display: none;">
+                    <button class="filter-chip active" data-filter="all" type="button">Todos</button>
+                    <button class="filter-chip" data-filter="approved" type="button">Liberados</button>
+                    <button class="filter-chip" data-filter="blocked" type="button">Pendentes</button>
+                </div>
+
+                <div id="loading-spinner-container" class="loading-grid" aria-hidden="true"></div>
+                <div id="loading-text" class="saving-text">Carregando base de chamados</div>
+                <div class="results-area" id="results-list"></div>
+            </section>
         </main>
     </div>
 
-    <!-- ===== TELA: DETALHE (ticket) ===== -->
-    <div id="screen-detail" hidden>
+    <div id="screen-detail">
+        <header class="topbar detail-topbar">
+            <a class="back-link" href="index.html" id="nav-consulta" aria-label="Voltar para consulta">
+                <span aria-hidden="true">←</span>
+                <span>Consulta</span>
+            </a>
+            <span class="detail-context">Detalhes do chamado</span>
+            <div class="topbar-spacer" aria-hidden="true"></div>
+        </header>
+
         <main class="detail-page" id="detail-view">
-            <section class="ticket-card ticket-split" id="ticket-wrapper">
-                <button class="sr-only-action" id="copy-all-btn" type="button" aria-label="Copiar todos os dados"></button>
-                <div class="ticket-half ticket-half--top">
-                    <div class="ticket-top-content">
-                    <div class="ticket-site-code" id="ticket-site-code">TEMGBHO0027</div>
-                    <div class="ticket-metrics">
-                        <div class="metric">
-                            <span class="metric-label"><span class="material-symbols-outlined">location_on</span> Estação</span>
-                            <span class="metric-value" id="detail-location">EMG0010</span>
-                        </div>
-                        <div class="metric">
-                            <span class="metric-label"><span class="material-symbols-outlined">build</span> Acesso</span>
-                            <span class="metric-value" id="detail-access-type">Manutenção</span>
-                        </div>
-                        <div class="metric">
-                            <span class="metric-label"><span class="material-symbols-outlined">check_circle</span> Status</span>
-                            <span class="metric-value metric-value--status"><span class="status-dot" id="detail-status-dot"></span><span id="detail-status">Aprovado</span></span>
-                        </div>
+            <section class="detail-hero" id="ticket-wrapper" aria-labelledby="ticket-site-code">
+                <div class="detail-hero-top">
+                    <div>
+                        <p class="eyebrow">ID da detentora</p>
+                        <h1 class="ticket-site-code" id="ticket-site-code">TCMGIIN0001</h1>
                     </div>
-                    </div>
+                    <span class="detail-status-badge"><span class="status-dot" id="detail-status-dot"></span><span id="detail-status">Aprovado</span></span>
                 </div>
 
-                <div class="ticket-seam" aria-hidden="true">
-                    <div class="perforation">
-                        <span class="perforation-cutout"></span>
-                        <span class="perforation-line"></span>
-                        <span class="perforation-cutout"></span>
+                <div class="ticket-metrics">
+                    <div class="metric">
+                        <span class="metric-label">Site</span>
+                        <strong class="metric-value" id="detail-location">MGING01</strong>
                     </div>
-                </div>
-
-                <div class="ticket-half ticket-half--bottom">
-                <div class="ticket-lower ticket-bottom-content">
-                    <div class="status-stack">
-                        <span class="section-label"><span class="material-symbols-outlined">cell_tower</span> Endereço:</span>
-                        <a class="access-status-text address-link" id="ticket-address">Não informado</a>
+                    <div class="metric">
+                        <span class="metric-label">Acesso</span>
+                        <strong class="metric-value" id="detail-access-type">Manutenção</strong>
                     </div>
-                </div>
+                    <div class="metric">
+                        <span class="metric-label">Validade</span>
+                        <strong class="metric-value" id="detail-date">--/--/----</strong>
+                    </div>
                 </div>
             </section>
 
             <section class="called-card" id="detail-obs-section">
                 <div class="called-card__top">
-                    <div class="called-card__titleblock">
-                        <span class="called-card__eyebrow">N° CHAMADO</span>
-                        <div class="called-number" id="detail-chamado">#00358519</div>
+                    <div>
+                        <p class="section-kicker">Número do chamado</p>
+                        <h2 class="called-number" id="detail-chamado">#417077</h2>
                     </div>
-                    <button class="icon-btn icon-btn--soft" id="copy-chamado-btn" type="button" aria-label="Copiar chamado">
-                        <span class="material-symbols-outlined">content_copy</span>
-                    </button>
+                    <button class="icon-btn" id="copy-chamado-btn" type="button" aria-label="Copiar número do chamado">⧉</button>
                 </div>
 
                 <div class="called-grid">
                     <div class="called-meta">
-                        <span class="section-label">ID Detentora</span>
-                        <strong id="detail-id-tbsa">TEMGBHO0027</strong>
+                        <span class="section-label">Cluster</span>
+                        <strong id="detail-cluster">-</strong>
                     </div>
                     <div class="called-meta">
-                        <span class="section-label">Site</span>
-                        <strong id="detail-id-claro">EMG0010</strong>
+                        <span class="section-label">Supervisor</span>
+                        <strong id="detail-supervisor">-</strong>
                     </div>
+                </div>
+
+                <div class="address-block">
+                    <span class="section-label">Endereço</span>
+                    <a class="address-link" id="ticket-address">Não informado</a>
                 </div>
 
                 <div class="obs-block">
                     <span class="section-label">Observações</span>
-                    <p class="obs-text" id="detail-obs">Carta encaminhada ao local. Problemas de acesso, acionar o NOC TBSA.</p>
+                    <p class="obs-text" id="detail-obs">Sem observações.</p>
                 </div>
             </section>
+
+            <button class="copy-all-btn" id="copy-all-btn" type="button">Copiar dados do chamado</button>
         </main>
 
-        <nav class="detail-bottomnav">
-            <a href="#" class="bottomnav-item" id="nav-consulta">
-                <span class="material-symbols-outlined">search</span>
-                <span class="bottomnav-label">Consulta</span>
-            </a>
-            <a href="#" class="bottomnav-item active" id="nav-detail">
-                <span class="material-symbols-outlined" id="nav-detail-icon">confirmation_number</span>
-                <span class="bottomnav-label">Detalhe</span>
+        <nav class="detail-bottomnav" aria-label="Navegação do chamado">
+            <a class="bottomnav-item active" href="#" id="nav-detail" aria-current="page">
+                <span class="bottomnav-icon" aria-hidden="true">▣</span>
+                <span>Detalhes</span>
             </a>
         </nav>
     </div>
 
-    <!-- ===== Elementos compartilhados ===== -->
-    <div id="pwa-install-banner" class="glass pwa-banner" style="display: none;">
-        <div class="pwa-banner-content">
-            <div class="pwa-icon">
-                <img src="logo-eqs.webp" alt="EQS" style="width: 28px; height: 28px; object-fit: contain;">
-            </div>
-            <div class="pwa-text">
-                <strong>App EQS</strong>
-                <span>Instalar na tela inicial</span>
-            </div>
+    <div id="pwa-install-banner" class="pwa-banner" style="display: none;">
+        <div>
+            <strong>Instalar consulta TBSA</strong>
+            <span>Acesse mais rápido na tela inicial.</span>
         </div>
         <div class="pwa-actions">
-            <button id="pwa-close" aria-label="Fechar">&#10005;</button>
-            <button id="pwa-install">INSTALAR</button>
+            <button id="pwa-close" type="button" aria-label="Fechar">×</button>
+            <button id="pwa-install" type="button">Instalar</button>
         </div>
     </div>
 
-    <footer>
-        <img src="logo-eqs.webp" alt="EQS Engenharia" class="footer-logo">
+    <footer class="app-footer">
+        <img src="logo-eqs.webp" alt="EQS Engenharia">
+        <span>Consulta operacional de acessos</span>
     </footer>
 
-    <div id="toast" class="toast"></div>
-
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <script src="app.js"></script>
 </body>
 
