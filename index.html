@@ -4,93 +4,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#f4f5f7">
-    <meta name="description" content="Consulta rápida de chamados TBSA para equipes em campo.">
-    <title>Consulta de Chamados TBSA</title>
+    <meta name="theme-color" content="#121923">
+    <meta name="description" content="Consulta operacional de chamados TBSA para equipes em campo.">
+    <title>Consulta TBSA | Portal de acessos</title>
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" href="logo-eqs.webp" type="image/webp">
-    <link rel="apple-touch-icon" href="logo-eqs.webp">
-    <link rel="stylesheet" href="index.css?v=20260807-redesign-2">
+    <link rel="icon" href="claro-logo.png" type="image/png">
+    <link rel="apple-touch-icon" href="claro-logo.png">
+    <link rel="stylesheet" href="index.css?v=20260807-portal-4">
 </head>
 
 <body>
     <div id="screen-index">
         <header class="topbar">
-            <a class="brand" href="index.html" aria-label="Consulta de chamados TBSA">
-                <img src="logo-eqs.webp" alt="EQS Engenharia">
-                <span class="brand-divider" aria-hidden="true"></span>
-                <span class="brand-copy">
-                    <strong>Consulta TBSA</strong>
-                    <small>Chamados de acesso</small>
-                </span>
-            </a>
+            <div class="topbar-inner">
+                <a class="brand" href="index.html" aria-label="Consulta de chamados TBSA">
+                    <span class="brand-mark" aria-hidden="true">
+                        <img src="claro-logo.png" alt="">
+                    </span>
+                    <img class="brand-eqs" src="logo-eqs-dark.png" alt="EQS Engenharia">
+                    <span class="brand-divider" aria-hidden="true"></span>
+                    <span class="brand-copy">
+                        <strong>Consulta TBSA</strong>
+                        <small>Portal de acessos</small>
+                    </span>
+                </a>
 
-            <div class="topbar-actions">
-                <span class="sync-compact" aria-hidden="true"></span>
-                <div class="theme-control">
-                    <input type="checkbox" id="theme-check">
-                    <label for="theme-check" aria-label="Alternar tema claro e escuro">
-                        <span class="theme-icon theme-icon-light">☼</span>
-                        <span class="theme-icon theme-icon-dark">◐</span>
-                        <span class="toggle-knob"></span>
-                    </label>
+                <div class="topbar-actions">
+                    <span class="sync-compact" aria-label="Base online"></span>
+                    <div class="theme-control">
+                        <input type="checkbox" id="theme-check">
+                        <label for="theme-check" aria-label="Alternar tema claro e escuro">
+                            <span>Claro</span>
+                            <span>Escuro</span>
+                            <span class="toggle-knob" aria-hidden="true"></span>
+                        </label>
+                    </div>
                 </div>
             </div>
         </header>
 
         <main class="main-container" id="main-container">
-            <section class="hero-section" aria-labelledby="page-title">
-                <div class="hero-copy">
-                    <p class="eyebrow">Operação TBSA</p>
-                    <h1 id="page-title">Encontre um chamado em segundos.</h1>
-                    <p class="hero-lede">Consulte por número, site ou ID da detentora.</p>
+            <section class="page-heading" aria-labelledby="page-title">
+                <div>
+                    <p class="page-label">Operação TBSA</p>
+                    <h1 id="page-title">Consulta de chamados</h1>
+                    <p class="page-description"><strong id="base-total">Carregando</strong> chamados disponíveis na base operacional.</p>
+                </div>
+                <div class="page-context" aria-label="Contexto da página">
+                    <span>Minas Gerais</span>
+                    <strong>Acessos de campo</strong>
+                </div>
+            </section>
+
+            <section class="search-section" aria-labelledby="search-title">
+                <div class="search-heading">
+                    <div>
+                        <h2 id="search-title">Localizar acesso</h2>
+                        <p>Busque por chamado, site ou ID da detentora.</p>
+                    </div>
+                    <span class="search-shortcut">Enter para consultar</span>
                 </div>
 
-                <div class="search-section" aria-label="Consulta de chamados">
-                    <div class="search-box">
-                        <label class="search-field" for="search-input">
-                            <span class="search-mark" aria-hidden="true"></span>
-                            <span class="sr-only">Buscar chamado</span>
-                            <input type="search" id="search-input" placeholder="Chamado, site ou ID" autocomplete="off" enterkeyhint="search">
-                            <kbd>Enter</kbd>
-                        </label>
-                        <button id="search-btn" class="search-btn" type="button">Consultar</button>
-                    </div>
-                    <div id="status-sync" class="status-sync" role="status" aria-live="polite"></div>
-                    <div id="status-search" class="status-search" role="status" aria-live="polite"></div>
+                <div class="search-box">
+                    <label class="search-field" for="search-input">
+                        <span class="sr-only">Buscar chamado</span>
+                        <input type="search" id="search-input" placeholder="Ex.: 417077, MGING01 ou TCMGIIN0001" autocomplete="off" enterkeyhint="search">
+                    </label>
+                    <button id="search-btn" class="search-btn" type="button">Consultar</button>
                 </div>
+                <div id="status-sync" class="status-sync" role="status" aria-live="polite"></div>
             </section>
 
             <section class="results-section" aria-live="polite">
                 <div class="results-heading">
                     <div>
-                        <p class="section-kicker">Resultado da consulta</p>
-                        <h2>Chamados encontrados</h2>
+                        <p class="section-kicker">Resultado</p>
+                        <h2 id="results-title">Pronto para consultar</h2>
                     </div>
-                    <span class="results-hint">Abra um chamado para ver os detalhes</span>
+                    <span class="results-hint" id="results-summary">Informe um identificador para localizar o acesso.</span>
                 </div>
 
                 <div class="dashboard-panel" id="dashboard-panel" style="display: none;">
                     <div class="stat-box stat-total">
+                        <span class="stat-accent" aria-hidden="true"></span>
                         <span class="stat-label">Encontrados</span>
                         <strong class="stat-value" id="stat-total">0</strong>
                     </div>
                     <div class="stat-box stat-ok">
+                        <span class="stat-accent" aria-hidden="true"></span>
                         <span class="stat-label">Liberados</span>
                         <strong class="stat-value" id="stat-ok">0</strong>
                     </div>
                     <div class="stat-box stat-bad">
+                        <span class="stat-accent" aria-hidden="true"></span>
                         <span class="stat-label">Pendentes</span>
                         <strong class="stat-value" id="stat-bad">0</strong>
                     </div>
                 </div>
 
-                <div class="filters-panel" id="filters-panel" style="display: none;">
+                <div class="filters-panel" id="filters-panel" style="display: none;" aria-label="Filtrar resultados">
                     <button class="filter-chip active" data-filter="all" type="button">Todos</button>
                     <button class="filter-chip" data-filter="approved" type="button">Liberados</button>
                     <button class="filter-chip" data-filter="blocked" type="button">Pendentes</button>
                 </div>
 
+                <div id="status-search" class="status-search" role="status" aria-live="polite">
+                    <div class="empty-state">
+                        <strong>Consulta direta e segura</strong>
+                        <span>Os dados são lidos do arquivo publicado neste portal.</span>
+                    </div>
+                </div>
                 <div id="loading-spinner-container" class="loading-grid" aria-hidden="true"></div>
                 <div id="loading-text" class="saving-text">Carregando base de chamados</div>
                 <div class="results-area" id="results-list"></div>
@@ -100,19 +123,17 @@
 
     <div id="screen-detail">
         <header class="topbar detail-topbar">
-            <a class="back-link" href="index.html" id="nav-consulta" aria-label="Voltar para consulta">
-                <span aria-hidden="true">←</span>
-                <span>Consulta</span>
-            </a>
-            <span class="detail-context">Detalhes do chamado</span>
-            <div class="topbar-spacer" aria-hidden="true"></div>
+            <div class="topbar-inner">
+                <a class="back-link" href="index.html" id="nav-consulta">Voltar à consulta</a>
+                <span class="detail-context">Detalhes do chamado</span>
+            </div>
         </header>
 
         <main class="detail-page" id="detail-view">
             <section class="detail-hero" id="ticket-wrapper" aria-labelledby="ticket-site-code">
                 <div class="detail-hero-top">
                     <div>
-                        <p class="eyebrow">ID da detentora</p>
+                        <p class="page-label">ID da detentora</p>
                         <h1 class="ticket-site-code" id="ticket-site-code">TCMGIIN0001</h1>
                     </div>
                     <span class="detail-status-badge"><span class="status-dot" id="detail-status-dot"></span><span id="detail-status">Aprovado</span></span>
@@ -124,8 +145,8 @@
                         <strong class="metric-value" id="detail-location">MGING01</strong>
                     </div>
                     <div class="metric">
-                        <span class="metric-label">Acesso</span>
-                        <strong class="metric-value" id="detail-access-type">Manutenção</strong>
+                        <span class="metric-label">Cluster</span>
+                        <strong class="metric-value" id="detail-access-type">SUL</strong>
                     </div>
                     <div class="metric">
                         <span class="metric-label">Validade</span>
@@ -140,14 +161,10 @@
                         <p class="section-kicker">Número do chamado</p>
                         <h2 class="called-number" id="detail-chamado">#417077</h2>
                     </div>
-                    <button class="icon-btn" id="copy-chamado-btn" type="button" aria-label="Copiar número do chamado">⧉</button>
+                    <button class="copy-number-btn" id="copy-chamado-btn" type="button">Copiar número</button>
                 </div>
 
                 <div class="called-grid">
-                    <div class="called-meta">
-                        <span class="section-label">Cluster</span>
-                        <strong id="detail-cluster">-</strong>
-                    </div>
                     <div class="called-meta">
                         <span class="section-label">Supervisor</span>
                         <strong id="detail-supervisor">-</strong>
@@ -167,22 +184,15 @@
 
             <button class="copy-all-btn" id="copy-all-btn" type="button">Copiar dados do chamado</button>
         </main>
-
-        <nav class="detail-bottomnav" aria-label="Navegação do chamado">
-            <a class="bottomnav-item active" href="#" id="nav-detail" aria-current="page">
-                <span class="bottomnav-icon" aria-hidden="true">▣</span>
-                <span>Detalhes</span>
-            </a>
-        </nav>
     </div>
 
     <div id="pwa-install-banner" class="pwa-banner" style="display: none;">
         <div>
             <strong>Instalar consulta TBSA</strong>
-            <span>Acesse mais rápido na tela inicial.</span>
+            <span>Acesse mais rápido pela tela inicial.</span>
         </div>
         <div class="pwa-actions">
-            <button id="pwa-close" type="button" aria-label="Fechar">×</button>
+            <button id="pwa-close" type="button">Fechar</button>
             <button id="pwa-install" type="button">Instalar</button>
         </div>
     </div>
@@ -193,7 +203,8 @@
     </footer>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script src="app.js"></script>
+
+    <script src="app.js?v=20260807-portal-4"></script>
 </body>
 
 </html>

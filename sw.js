@@ -1,4 +1,4 @@
-const CACHE_NAME = 'eqs-consulta-v8';
+const CACHE_NAME = 'eqs-consulta-v13';
 const ASSETS = [
     './',
     './index.html',
@@ -8,6 +8,7 @@ const ASSETS = [
     './manifest.json',
     './logo-eqs.webp',
     './logo-eqs-dark.png',
+    './claro-logo.png',
     './fonts/archivo-latin-wght-normal.woff2',
     './fonts/barlow-latin-400-normal.woff2',
     './fonts/barlow-latin-500-normal.woff2',

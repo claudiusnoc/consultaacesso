@@ -1,18 +1,11 @@
 const CONFIG = {
     CSV_URL: './chamados.csv?v=20260807',
-    CACHE_KEY: 'eqs-data-cache-v2',
+    CACHE_KEY: 'eqs-data-cache-v3',
     CACHE_TTL: 5 * 60 * 1000,
     DEBOUNCE_DELAY: 300,
-    FETCH_TIMEOUT: 6000
+    FETCH_TIMEOUT: 6000,
+    MAX_RESULTS: 100
 };
-
-const OFFLINE_DATA = [
-    { "c": "00358519", "t": "TEMGBHO0027", "l": "EMG0010", "f": "2026-05-31", "o": "Carta encaminhada ao local. Problemas de acesso, acionar o NOC TBSA.", "e": "Rua exemplo, bairro exemplo - Belo Horizonte/MG" },
-    { "c": "00358516", "t": "TEMGBHO0004", "l": "EMG0135", "f": "2026-05-31", "o": "Necessário retirar a chave na Claro.", "e": "Não informado" },
-    { "c": "00358565", "t": "TEMGDIV0002", "l": "EMG0349", "f": "2026-05-31", "o": "Direcionar os técnicos com a carta de liberação em mãos.", "e": "Rua exemplo, bairro exemplo - Divinópolis/MG" },
-    { "c": "00358008", "t": "TCMGACA0001", "l": "MGACA01", "f": "2026-05-30", "o": "Apresentação apenas do chamado na Central da Claro.", "e": "Rua exemplo, bairro exemplo - Acaiaca/MG" },
-    { "c": "00358009", "t": "TCMGACA0002", "l": "MGACAR1", "f": "2026-05-30", "o": "Uso do APP MASTER LOCK VAULT ENTERPRISE.", "e": "Rua exemplo, bairro exemplo - Acaiaca/MG" }
-];
 
 let dataStore = [];
 
@@ -30,7 +23,10 @@ const Elements = {
     statTotal: document.getElementById('stat-total'),
     statOk: document.getElementById('stat-ok'),
     statBad: document.getElementById('stat-bad'),
-    filterChips: document.querySelectorAll('.filter-chip')
+    filterChips: document.querySelectorAll('.filter-chip'),
+    baseTotal: document.getElementById('base-total'),
+    resultsTitle: document.getElementById('results-title'),
+    resultsSummary: document.getElementById('results-summary')
 };
 
 // === Detail Elements (shared across screens) ===
@@ -43,7 +39,6 @@ const DetailEls = {
     address: document.getElementById('ticket-address'),
     chamado: document.getElementById('detail-chamado'),
     date: document.getElementById('detail-date'),
-    cluster: document.getElementById('detail-cluster'),
     supervisor: document.getElementById('detail-supervisor'),
     obs: document.getElementById('detail-obs'),
     obsSection: document.getElementById('detail-obs-section'),
@@ -81,6 +76,16 @@ function showToast(message, duration) {
     toast.classList.add('show');
     clearTimeout(showToast._timer);
     showToast._timer = setTimeout(() => toast.classList.remove('show'), duration || 2500);
+}
+
+function updateBaseSummary() {
+    if (!Elements.baseTotal) return;
+    Elements.baseTotal.textContent = dataStore.length ? String(dataStore.length) : 'Nenhum';
+}
+
+function updateResultsHeading(title, summary) {
+    if (Elements.resultsTitle) Elements.resultsTitle.textContent = title;
+    if (Elements.resultsSummary) Elements.resultsSummary.textContent = summary;
 }
 
 function toIsoDate(dateStr) {
@@ -178,11 +183,11 @@ function populatePage(data) {
     const status = (data.s || '').trim().toLowerCase();
     const isApproved = status === 'aprovado' || status === '';
     const isBlocked = isOverdue || !isApproved;
-    const statusLabel = isOverdue ? 'Vencido' : (isApproved ? 'Aprovado' : (data.s || 'Bloqueado'));
+    const statusLabel = isOverdue ? 'Vencido' : (isApproved ? 'Liberado' : (data.s || 'Bloqueado'));
 
     DetailEls.siteCode.textContent = data.t || '--';
     DetailEls.location.textContent = data.l || '--';
-    DetailEls.accessType.textContent = 'Manutenção';
+    DetailEls.accessType.textContent = data.cluster || 'Não informado';
     if (DetailEls.date) DetailEls.date.textContent = formatDate(data.f);
     DetailEls.status.textContent = statusLabel;
     const address = data.e || 'Não informado';
@@ -204,7 +209,6 @@ function populatePage(data) {
 
     DetailEls.statusDot.classList.toggle('is-blocked', isBlocked);
     DetailEls.chamado.textContent = `#${data.c || '--'}`;
-    if (DetailEls.cluster) DetailEls.cluster.textContent = data.cluster || 'Não informado';
     if (DetailEls.supervisor) DetailEls.supervisor.textContent = data.supervisor || 'Não informado';
 
     if (data.o) {
@@ -234,7 +238,7 @@ function showScreen(screenId, data) {
             document.title = `Detalhe: ${data ? (data.t || 'Chamado') : 'Chamado'} - EQS`;
         } else {
             document.body.classList.remove('showing-detail');
-            document.title = 'Consulta de Sites - EQS';
+            document.title = 'Consulta TBSA | Portal de acessos';
         }
     };
 
@@ -283,9 +287,10 @@ async function fetchData() {
     const cached = getCachedData();
     if (cached) {
         dataStore = cached;
+        updateBaseSummary();
         Elements.spinnerContainer.style.display = 'none';
         Elements.loadingText.style.display = 'none';
-        Elements.statusSync.innerHTML = '<span class="status-sync-ok">● Dados carregados do cache</span>';
+        Elements.statusSync.innerHTML = '<span class="status-sync-ok">Dados carregados do dispositivo</span>';
         fetchRemoteData(true);
         return;
     }
@@ -294,9 +299,11 @@ async function fetchData() {
 }
 
 function showInitialLoading() {
-    Elements.spinnerContainer.style.display = 'flex';
+    Elements.spinnerContainer.style.display = 'grid';
     Elements.loadingText.style.display = 'block';
     Elements.statusSync.innerHTML = '';
+    Elements.statusSearch.innerHTML = '';
+    updateResultsHeading('Carregando base', 'Preparando os dados publicados neste portal.');
     Elements.spinnerContainer.innerHTML = '';
     for (let i = 0; i < 3; i++) {
         const skel = document.createElement('div');
@@ -330,12 +337,24 @@ async function fetchRemoteData(silent) {
         }));
 
         setCachedData(dataStore);
-        Elements.statusSync.innerHTML = '<span class="status-sync-ok">● Base de chamados sincronizada</span>';
+        updateBaseSummary();
+        Elements.statusSync.innerHTML = '<span class="status-sync-ok">Base operacional atualizada</span>';
+        if (!Elements.input.value.trim()) {
+            updateResultsHeading('Pronto para consultar', 'Informe um identificador para localizar o acesso.');
+            Elements.statusSearch.innerHTML = `
+                <div class="empty-state">
+                    <strong>Consulta direta e segura</strong>
+                    <span>Os dados são lidos do arquivo publicado neste portal.</span>
+                </div>
+            `;
+        }
         clearTimeout(timeoutId);
     } catch (error) {
         clearTimeout(timeoutId);
         if (!silent) {
             dataStore = [];
+            updateBaseSummary();
+            updateResultsHeading('Base indisponível', 'Não foi possível ler o arquivo de chamados.');
             Elements.statusSync.innerHTML = `
                 <div class="status-sync-fail">
                     <strong>Base de chamados indisponível</strong><br>
@@ -392,18 +411,26 @@ function removeAccents(str) {
 
 function handleSearch() {
     const query = removeAccents(Elements.input.value.trim().toLowerCase());
+    const rawQuery = Elements.input.value.trim();
     Elements.resultsList.innerHTML = '';
     document.getElementById('main-container').classList.add('has-results');
 
     if (dataStore.length === 0) {
         Elements.statusSearch.textContent = 'Aguarde o carregamento inicial da base...';
+        updateResultsHeading('Carregando base', 'A consulta será liberada assim que os dados estiverem prontos.');
         Elements.dashboardPanel.style.display = 'none';
         Elements.filtersPanel.style.display = 'none';
         return;
     }
 
     if (!query) {
-        Elements.statusSearch.textContent = 'Digite algo para buscar.';
+        updateResultsHeading('Pronto para consultar', 'Informe um identificador para localizar o acesso.');
+        Elements.statusSearch.innerHTML = `
+            <div class="empty-state">
+                <strong>Digite um termo de busca</strong>
+                <span>Use o número do chamado, o site ou o ID da detentora.</span>
+            </div>
+        `;
         Elements.dashboardPanel.style.display = 'none';
         Elements.filtersPanel.style.display = 'none';
         return;
@@ -418,9 +445,11 @@ function handleSearch() {
     });
 
     if (filtered.length === 0) {
+        updateResultsHeading('Nenhum chamado encontrado', `Busca por “${rawQuery}”.`);
         Elements.statusSearch.innerHTML = `
             <div class="status-error">
-                Nenhum resultado encontrado. Tente buscar por parte do nome, ID da detentora ou chamado.
+                <strong>Revise o identificador informado</strong>
+                <span>Tente parte do chamado, do site ou do ID da detentora.</span>
             </div>
         `;
         Elements.dashboardPanel.style.display = 'none';
@@ -446,8 +475,10 @@ function handleSearch() {
     Elements.statOk.textContent = countOk;
     Elements.statBad.textContent = countBad;
 
+    const resultLabel = filtered.length === 1 ? '1 chamado encontrado' : `${filtered.length} chamados encontrados`;
+    updateResultsHeading(resultLabel, `Busca por “${rawQuery}”.`);
     Elements.statusSearch.textContent = '';
-    Elements.dashboardPanel.style.display = 'flex';
+    Elements.dashboardPanel.style.display = 'grid';
     Elements.filtersPanel.style.display = 'flex';
 
     let finalResults = [];
@@ -470,11 +501,25 @@ function handleSearch() {
     }
 
     if (finalResults.length === 0) {
-        Elements.statusSearch.innerHTML = `<div style="padding:10px;color:var(--text-secondary);">Nenhum chamado nesta categoria de filtro.</div>`;
+        Elements.statusSearch.innerHTML = `
+            <div class="empty-state">
+                <strong>Nenhum chamado neste filtro</strong>
+                <span>Selecione outra situação para conferir os resultados.</span>
+            </div>
+        `;
         return;
     }
 
-    finalResults.forEach((item, index) => {
+    const visibleResults = finalResults.slice(0, CONFIG.MAX_RESULTS);
+    if (finalResults.length > visibleResults.length) {
+        Elements.statusSearch.innerHTML = `
+            <div class="result-limit">
+                Exibindo ${visibleResults.length} de ${finalResults.length} resultados. Refine a busca para localizar um acesso específico.
+            </div>
+        `;
+    }
+
+    visibleResults.forEach((item, index) => {
         const card = createModernCard(item);
         card.classList.add('card-animate');
         card.style.animationDelay = `${Math.min(index, 6) * 0.04}s`;
@@ -484,7 +529,6 @@ function handleSearch() {
 
 function createModernCard(item) {
     const card = document.createElement('article');
-    card.className = 'result-card';
     const isOverdue = checkIfOverdue(item.f);
     const dateDisplay = formatDisplayDate(item.f);
     const status = (item.s || '').trim().toLowerCase();
@@ -492,53 +536,21 @@ function createModernCard(item) {
     const isBlocked = isOverdue || !isApproved;
     const statusLabel = isOverdue ? 'Vencido' : (isApproved ? 'Liberado' : (item.s || 'Pendente'));
     const itemJson = JSON.stringify(item).replace(/'/g, "&#39;");
+    card.className = `result-card${isBlocked ? ' is-blocked' : ''}`;
 
     card.innerHTML = `
-        <div class="result-card__top">
-            <div class="result-card__identity">
-                <span class="result-card__ticket">Chamado #${escapeHTML(item.c)}</span>
-                <h3>${escapeHTML(item.t)}</h3>
-                <p>Site ${escapeHTML(item.l)}</p>
-            </div>
-            <span class="result-status ${isBlocked ? 'is-blocked' : 'is-approved'}">${escapeHTML(statusLabel)}</span>
+        <div class="result-card__identity">
+            <span class="result-card__ticket">Chamado #${escapeHTML(item.c)}</span>
+            <h3>${escapeHTML(item.t)}</h3>
+            <p>Site ${escapeHTML(item.l)}</p>
         </div>
         <div class="result-card__meta">
             <span><small>Validade</small><strong>${escapeHTML(dateDisplay)}</strong></span>
             <span><small>Cluster</small><strong>${escapeHTML(item.cluster || 'Não informado')}</strong></span>
         </div>
-        ${item.o ? `<p class="result-card__note">${escapeHTML(item.o)}</p>` : ''}
+        <span class="result-status ${isBlocked ? 'is-blocked' : 'is-approved'}">${escapeHTML(statusLabel)}</span>
         <button class="detail-btn ${isBlocked ? 'is-blocked' : ''}" data-detail='${itemJson}' type="button">Ver detalhes</button>
-    `;
-    return card;
-}
-
-function createCard(item) {
-    const card = document.createElement('div');
-    card.className = 'glass card';
-    const isOverdue = checkIfOverdue(item.f);
-    const dateDisplay = formatDisplayDate(item.f);
-    const status = (item.s || '').trim().toLowerCase();
-    const isApproved = status === 'aprovado' || status === '';
-    const isBlocked = isOverdue || !isApproved;
-    const blockLabel = !isApproved ? `🚫 ${escapeHTML(item.s).toUpperCase()}` : '🚫 REPROVADO';
-
-    const itemJson = JSON.stringify(item).replace(/'/g, "&#39;");
-
-    card.innerHTML = `
-        <div class="card-header">
-            <div class="card-titles">
-                <div class="ticket-id">CHAMADO #${escapeHTML(item.c)}</div>
-                <div class="main-id">${escapeHTML(item.t)}<br><span style="font-size: 16px; font-weight: 600; opacity: 0.8;">${escapeHTML(item.l)}</span></div>
-            </div>
-            <div class="badge ${isBlocked ? 'badge-overdue' : 'badge-valid'}">
-                ${escapeHTML(dateDisplay)}
-            </div>
-        </div>
-        ${item.o ? `<div class="obs">${escapeHTML(item.o)}</div>` : ''}
-        ${isBlocked
-            ? `<button class="copy-btn blocked" disabled>${blockLabel}</button>`
-            : `<button class="detail-btn" data-detail='${itemJson}'>DETALHES</button>`
-        }
+        ${item.o ? `<p class="result-card__note">${escapeHTML(item.o)}</p>` : ''}
     `;
     return card;
 }
@@ -646,10 +658,10 @@ window.addEventListener('load', fetchData);
 
 // PWA Service Worker
 if ('serviceWorker' in navigator) {
-    caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
-    navigator.serviceWorker.getRegistrations().then(regs => {
-        regs.forEach(r => r.unregister());
-        setTimeout(() => navigator.serviceWorker.register('sw.js'), 500);
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch((error) => {
+            console.warn('Service worker registration failed:', error);
+        });
     });
 }
 
