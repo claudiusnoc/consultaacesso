@@ -1,6 +1,6 @@
 const CONFIG = {
-    CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSd38yd9rKqhhtcr-np09wmsa2VsS2wV4cQqPjqQbzV7bUhZJTWwrXqO-4aPAHK9g/pub?output=csv',
-    CACHE_KEY: 'eqs-data-cache',
+    CSV_URL: './chamados.csv?v=20260807',
+    CACHE_KEY: 'eqs-data-cache-v2',
     CACHE_TTL: 5 * 60 * 1000,
     DEBOUNCE_DELAY: 300,
     FETCH_TIMEOUT: 6000
@@ -82,24 +82,38 @@ function showToast(message, duration) {
     showToast._timer = setTimeout(() => toast.classList.remove('show'), duration || 2500);
 }
 
+function toIsoDate(dateStr) {
+    const value = String(dateStr || '').trim();
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(value)) {
+        const [day, month, year] = value.split('/');
+        return `${year}-${month}-${day}`;
+    }
+    return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : '';
+}
+
 function formatDate(dateStr) {
-    if (!dateStr) return '--/--/----';
-    const parts = dateStr.split('-');
-    return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : dateStr;
+    const isoDate = toIsoDate(dateStr);
+    if (!isoDate) return dateStr || '--/--/----';
+    const [year, month, day] = isoDate.split('-');
+    return `${day}/${month}/${year}`;
 }
 
 function checkIfOverdue(dateStr) {
-    if (!dateStr) return false;
-    return new Date(`${dateStr}T23:59:59`) < new Date();
+    const isoDate = toIsoDate(dateStr);
+    return isoDate ? new Date(`${isoDate}T23:59:59`) < new Date() : false;
 }
 
 function formatDisplayDate(dateStr) {
-    if (!dateStr) return '--/--/----';
-    try {
-        const parts = dateStr.split('-');
-        if (parts.length !== 3) return dateStr;
-        return `${parts[2]}/${parts[1]}/${parts[0]}`;
-    } catch (e) { return dateStr; }
+    return formatDate(dateStr);
+}
+
+function normalizeStatus(status) {
+    const value = String(status || '').trim();
+    const normalized = removeAccents(value).toLowerCase();
+    if (normalized === 'liberado' || normalized === 'aprovado') return 'Aprovado';
+    if (normalized === 'reprovado') return 'Reprovado';
+    if (normalized === 'aguardando aprovacao') return 'Aguardando Aprovação';
+    return value;
 }
 
 function hasValidAddress(address) {
@@ -312,16 +326,18 @@ async function fetchRemoteData(silent) {
 
         dataStore = remoteData.map(item => ({
             c: item['CHAMADO'] || '',
-            t: item['ID TBSA'] || '',
-            l: item['ID CLARO'] || '',
-            f: item['FIM ACESSO'] || '',
-            s: item['STATUS'] || '',
+            t: item['ID DETENTORA'] || '',
+            l: item['SITE'] || '',
+            f: item['VALIDADE'] || '',
+            s: normalizeStatus(item['STATUS']),
             o: item['OBSERVAÇÕES'] || '',
-            e: item['ENDERECO'] || ''
+            e: item['ENDEREÇO'] || item['ENDERECO'] || '',
+            cluster: item['CLUSTER'] || '',
+            supervisor: item['SUPERVISOR'] || ''
         }));
 
         setCachedData(dataStore);
-        Elements.statusSync.innerHTML = '<span class="status-sync-ok">● Conectado à Planilha (Sincronizado)</span>';
+        Elements.statusSync.innerHTML = '<span class="status-sync-ok">● Base de chamados sincronizada</span>';
         clearTimeout(timeoutId);
     } catch (error) {
         clearTimeout(timeoutId);
