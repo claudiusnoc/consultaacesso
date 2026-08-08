@@ -4,7 +4,7 @@ O webapp é publicado pelo GitHub Pages a partir da branch `main`. Os dados exib
 
 ## Atualizar os status
 
-O comando abaixo consulta no Acesites somente os sites cujo status ainda não é `Liberado`, cruza o retorno pelo par `ID DETENTORA + CHAMADO` e altera apenas a coluna `STATUS`:
+O comando abaixo baixa uma única vez o relatório interno do Acesites, mantém somente os 520 pares `ID DETENTORA + CHAMADO` do controle e altera apenas a coluna `STATUS`:
 
 ```powershell
 .\atualizar-webapp.ps1
@@ -22,17 +22,17 @@ Para atualizar, criar o commit e publicar na branch atual:
 .\atualizar-webapp.ps1 -Publicar
 ```
 
-O processo não abre chamados e não chama o endpoint de criação. Ele consulta os chamados existentes, mantém as 520 linhas do CSV e recusa a publicação quando existem outras alterações locais.
+O processo não abre chamados e não chama o endpoint de criação. Ele exige os 520 chamados no relatório, bloqueia duplicidades, status desconhecidos e relatórios incompletos, e recusa a publicação quando existem outras alterações locais.
 
-## Agendamento diário
+## Agendamento automático
 
-Depois que esta alteração estiver na `main`, o agendamento pode ser instalado no Windows informando o horário desejado:
+O fluxo previsto roda a cada dois dias, às 08:00. Como alternativa local pelo Agendador do Windows:
 
 ```powershell
-.\instalar-agendamento.ps1 -Horario 07:00
+.\instalar-agendamento.ps1 -Horario 08:00 -IntervaloDias 2
 ```
 
-O agendamento usa a sessão e as credenciais já configuradas no computador. Ele não é instalado automaticamente pelo repositório.
+O agendamento usa a credencial protegida e já configurada neste computador. Cada execução fecha sua sessão do navegador ao terminar e só publica quando algum status mudou.
 
 ## Publicação
 

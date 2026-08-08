@@ -12,8 +12,48 @@ test('normaliza chamados e status do portal', () => {
   assert.equal(normalizeCall('417077'), '00417077');
   assert.equal(normalizeStatus('Aprovado / Chaves Liberadas'), 'Liberado');
   assert.equal(normalizeStatus('Aguardando Aprovação'), 'Aguardando Aprovação');
+  assert.equal(normalizeStatus('Aguardando'), 'Aguardando Aprovação');
   assert.equal(normalizeStatus('Em tratamento'), 'Em Tratamento');
   assert.equal(normalizeStatus('Reprovado'), 'Reprovado');
+});
+
+test('sincroniza o relatório único exportado pelo portal', () => {
+  const records = [
+    { CHAMADO: '00417077', 'ID DETENTORA': 'TCMG001', STATUS: 'Aguardando Aprovação' },
+    { CHAMADO: '00417078', 'ID DETENTORA': 'TCMG002', STATUS: 'Aguardando Aprovação' },
+  ];
+  const report = {
+    complete: true,
+    rows: [
+      { id: '00417077', idSiteacessar: 'TCMG001', statu: 'Aprovado' },
+      { id: '00417078', idSiteacessar: 'TCMG002', statu: 'Aguardando' },
+    ],
+  };
+  const result = synchronizeRecords(records, report);
+  assert.equal(result.matched, 2);
+  assert.equal(result.updated, 1);
+  assert.equal(result.missing.length, 0);
+  assert.equal(records[0].STATUS, 'Liberado');
+  assert.equal(records[1].STATUS, 'Aguardando Aprovação');
+});
+
+test('bloqueia status conflitantes no relatório completo', () => {
+  const records = [{ CHAMADO: '00417077', 'ID DETENTORA': 'TCMG001', STATUS: 'Aguardando Aprovação' }];
+  const report = {
+    complete: true,
+    rows: [
+      { id: '00417077', idSiteacessar: 'TCMG001', statu: 'Aprovado' },
+      { id: '00417077', idSiteacessar: 'TCMG001', statu: 'Reprovado' },
+    ],
+  };
+  assert.throws(() => synchronizeRecords(records, report), /Status conflitante/);
+});
+
+test('marca como ausente qualquer chamado de um relatório completo', () => {
+  const records = [{ CHAMADO: '00417077', 'ID DETENTORA': 'TCMG001', STATUS: 'Liberado' }];
+  const result = synchronizeRecords(records, { complete: true, rows: [] });
+  assert.equal(result.matched, 0);
+  assert.equal(result.missing.length, 1);
 });
 
 test('preserva CSV com vírgulas e aspas', () => {

@@ -10,8 +10,27 @@ $ErrorActionPreference = 'Stop'
 $repo = $PSScriptRoot
 $csvPath = Join-Path $repo 'chamados.csv'
 $syncScript = Join-Path $repo 'scripts\sync-chamados.mjs'
+$exportScript = Join-Path $repo 'scripts\exportar-relatorio-portal.ps1'
 if (-not (Test-Path -LiteralPath $csvPath)) { throw 'chamados.csv não encontrado.' }
 if (-not (Test-Path -LiteralPath $syncScript)) { throw 'scripts\sync-chamados.mjs não encontrado.' }
+if (-not (Test-Path -LiteralPath $exportScript)) { throw 'scripts\exportar-relatorio-portal.ps1 não encontrado.' }
+
+if ($Publicar) {
+    $branch = (git -C $repo branch --show-current).Trim()
+    if ($branch -ne 'main') { throw "Publicação automática permitida somente na branch main. Branch atual: $branch" }
+    $initialChanges = @(git -C $repo status --porcelain)
+    if ($initialChanges.Count -gt 0) {
+        throw "Publicação bloqueada: o repositório possui alterações locais antes da consulta.`n$($initialChanges -join [Environment]::NewLine)"
+    }
+    git -C $repo fetch origin main --quiet
+    if ($LASTEXITCODE -ne 0) { throw 'Falha ao consultar a versão atual da branch main no GitHub.' }
+    $localHead = (git -C $repo rev-parse HEAD).Trim()
+    $remoteHead = (git -C $repo rev-parse origin/main).Trim()
+    if ($localHead -ne $remoteHead) {
+        git -C $repo merge --ff-only origin/main
+        if ($LASTEXITCODE -ne 0) { throw 'A branch main local divergiu do GitHub. Publicação bloqueada.' }
+    }
+}
 
 $rows = @(Import-Csv -LiteralPath $csvPath -Encoding UTF8)
 if ($rows.Count -eq 0) { throw 'O CSV está vazio.' }
@@ -28,15 +47,13 @@ if (-not $RelatorioPortal) {
         Write-Host 'Todos os chamados já estão liberados. Nenhuma consulta necessária.'
         exit 0
     }
-    $queryScript = Join-Path $ProjetoPortal 'consultar-sites-playwright.ps1'
-    if (-not (Test-Path -LiteralPath $queryScript)) { throw "Consulta do portal não encontrada: $queryScript" }
-    $reportDirectory = Join-Path $ProjetoPortal '.tbsa'
+    $reportDirectory = Join-Path $ProjetoPortal '.tbsa\relatorios-webapp'
     if (-not (Test-Path -LiteralPath $reportDirectory)) { New-Item -ItemType Directory -Path $reportDirectory | Out-Null }
     $RelatorioPortal = Join-Path $reportDirectory ("webapp-status-{0}.json" -f (Get-Date -Format 'yyyyMMdd-HHmmss'))
-    Write-Host "Consultando somente $($pendingSites.Count) site(s) ainda não liberado(s)..."
-    & $queryScript -Sites $pendingSites -Saida $RelatorioPortal
+    Write-Host "Extraindo um único relatório para os $($rows.Count) chamado(s) do controle..."
+    & $exportScript -BaseCsv $csvPath -Saida $RelatorioPortal -ProjetoPortal $ProjetoPortal
     if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $RelatorioPortal)) {
-        throw 'Falha na consulta somente leitura ao portal.'
+        throw 'Falha na extração somente leitura do relatório do portal.'
     }
 }
 
@@ -51,6 +68,9 @@ if ($DryRun) { $arguments += '--dry-run' }
 $syncOutput = @(& $node @arguments)
 if ($LASTEXITCODE -ne 0) { throw 'Falha ao sincronizar o CSV.' }
 $summary = $syncOutput[-1] | ConvertFrom-Json
+if ($summary.matched -ne $rows.Count -or $summary.missing -ne 0) {
+    throw "Sincronização bloqueada: relatório incompleto ($($summary.matched)/$($rows.Count), $($summary.missing) ausente(s))."
+}
 
 $validatedRows = @(Import-Csv -LiteralPath $csvPath -Encoding UTF8)
 $duplicates = @($validatedRows | Group-Object 'ID DETENTORA' | Where-Object { $_.Count -gt 1 })
@@ -77,9 +97,7 @@ if ($Publicar) {
     git -C $repo add -- chamados.csv
     git -C $repo commit -m 'Atualiza status dos chamados TBSA'
     if ($LASTEXITCODE -ne 0) { throw 'Falha ao criar o commit de atualização.' }
-    $branch = (git -C $repo branch --show-current).Trim()
-    if (-not $branch) { throw 'Não foi possível identificar a branch atual.' }
-    git -C $repo push origin $branch
+    git -C $repo push origin main
     if ($LASTEXITCODE -ne 0) { throw 'Falha ao publicar a atualização no GitHub.' }
-    Write-Host "Atualização publicada na branch $branch."
+    Write-Host 'Atualização publicada na branch main.'
 }

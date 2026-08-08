@@ -26,7 +26,7 @@ export function normalizeStatus(value) {
   const normalized = removeAccents(value).trim().toLowerCase();
   if (!normalized) return '';
   if (normalized.includes('reprovado')) return 'Reprovado';
-  if (normalized.includes('aguardando') && normalized.includes('aprov')) return 'Aguardando Aprovação';
+  if (normalized.includes('aguardando')) return 'Aguardando Aprovação';
   if (normalized.includes('tratamento')) return 'Em Tratamento';
   if (normalized.includes('liberado') || normalized.includes('aprovado') || normalized.includes('chaves liberadas')) return 'Liberado';
   return '';
@@ -93,13 +93,24 @@ function portalCells(row) {
 
 export function buildPortalStatusMap(report) {
   const result = new Map();
-  for (const [siteValue, rows] of Object.entries(report?.calls || {})) {
+  const addStatus = (siteValue, callValue, statusValue) => {
     const site = String(siteValue || '').trim().toUpperCase();
+    const call = normalizeCall(callValue);
+    const status = normalizeStatus(statusValue);
+    if (!site || !call || !status) return;
+    const key = `${site}|${call}`;
+    const previous = result.get(key);
+    if (previous && previous !== status) throw new Error(`Status conflitante no relatório para ${key}.`);
+    result.set(key, status);
+  };
+
+  for (const row of Array.isArray(report?.rows) ? report.rows : []) {
+    addStatus(row?.idSiteacessar, row?.id, row?.statu);
+  }
+  for (const [siteValue, rows] of Object.entries(report?.calls || {})) {
     for (const rawRow of Array.isArray(rows) ? rows : []) {
       const cells = portalCells(rawRow);
-      const call = normalizeCall(cells[0]);
-      const status = normalizeStatus(cells[12]);
-      if (site && call && status) result.set(`${site}|${call}`, status);
+      addStatus(siteValue, cells[0], cells[12]);
     }
   }
   return result;
@@ -116,7 +127,7 @@ export function synchronizeRecords(records, report) {
     const call = normalizeCall(record.CHAMADO);
     const portalStatus = portalStatuses.get(`${site}|${call}`);
     if (!portalStatus) {
-      if (normalizeStatus(record.STATUS) !== 'Liberado') missing.push({ site, chamado: call });
+      if (report?.complete === true || normalizeStatus(record.STATUS) !== 'Liberado') missing.push({ site, chamado: call });
       continue;
     }
     matched += 1;
