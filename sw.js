@@ -1,4 +1,4 @@
-const CACHE_NAME = 'eqs-consulta-v13';
+const CACHE_NAME = 'eqs-consulta-v14';
 const ASSETS = [
     './',
     './index.html',

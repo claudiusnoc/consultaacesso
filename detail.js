@@ -58,6 +58,15 @@ function checkIfOverdue(dateStr) {
     return new Date(`${dateStr}T23:59:59`) < new Date();
 }
 
+function isApprovedStatus(status) {
+    const normalized = String(status || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim()
+        .toLowerCase();
+    return normalized === 'liberado' || normalized === 'aprovado';
+}
+
 function escapeHTML(str) {
     if (!str) return '';
     const div = document.createElement('div');
@@ -105,10 +114,9 @@ async function copyText(text, successMessage, errorMessage) {
 
 function populatePage(data) {
     const isOverdue = checkIfOverdue(data.f);
-    const status = (data.s || '').trim().toLowerCase();
-    const isApproved = status === 'aprovado' || status === '';
+    const isApproved = isApprovedStatus(data.s);
     const isBlocked = isOverdue || !isApproved;
-    const statusLabel = isOverdue ? 'Vencido' : (isApproved ? 'Aprovado' : (data.s || 'Bloqueado'));
+    const statusLabel = isOverdue ? 'Vencido' : (isApproved ? 'Liberado' : (data.s || 'Bloqueado'));
 
     els.siteCode.textContent = data.t || '--';
     els.location.textContent = data.l || '--';

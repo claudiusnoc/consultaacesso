@@ -1,6 +1,6 @@
 const CONFIG = {
-    CSV_URL: './chamados.csv?v=20260807',
-    CACHE_KEY: 'eqs-data-cache-v3',
+    CSV_URL: './chamados.csv',
+    CACHE_KEY: 'eqs-data-cache-v4',
     CACHE_TTL: 5 * 60 * 1000,
     DEBOUNCE_DELAY: 300,
     FETCH_TIMEOUT: 6000,
@@ -116,10 +116,14 @@ function formatDisplayDate(dateStr) {
 function normalizeStatus(status) {
     const value = String(status || '').trim();
     const normalized = removeAccents(value).toLowerCase();
-    if (normalized === 'liberado' || normalized === 'aprovado') return 'Aprovado';
+    if (normalized === 'liberado' || normalized === 'aprovado') return 'Liberado';
     if (normalized === 'reprovado') return 'Reprovado';
     if (normalized === 'aguardando aprovacao') return 'Aguardando Aprovação';
     return value;
+}
+
+function isApprovedStatus(status) {
+    return normalizeStatus(status) === 'Liberado';
 }
 
 function hasValidAddress(address) {
@@ -180,8 +184,7 @@ function playTicketCopyAnimation() {
 
 function populatePage(data) {
     const isOverdue = checkIfOverdue(data.f);
-    const status = (data.s || '').trim().toLowerCase();
-    const isApproved = status === 'aprovado' || status === '';
+    const isApproved = isApprovedStatus(data.s);
     const isBlocked = isOverdue || !isApproved;
     const statusLabel = isOverdue ? 'Vencido' : (isApproved ? 'Liberado' : (data.s || 'Bloqueado'));
 
@@ -317,7 +320,7 @@ async function fetchRemoteData(silent) {
     const timeoutId = setTimeout(() => controller.abort(), CONFIG.FETCH_TIMEOUT);
 
     try {
-        const response = await fetch(CONFIG.CSV_URL, { signal: controller.signal });
+        const response = await fetch(CONFIG.CSV_URL, { signal: controller.signal, cache: 'no-store' });
 
         if (!response || !response.ok) throw new Error('Falha no download');
 
@@ -462,8 +465,7 @@ function handleSearch() {
 
     filtered.forEach(item => {
         const isOverdue = checkIfOverdue(item.f);
-        const status = (item.s || '').trim().toLowerCase();
-        const isApproved = status === 'aprovado' || status === '';
+        const isApproved = isApprovedStatus(item.s);
         if (isOverdue || !isApproved) {
             countBad++;
         } else {
@@ -487,15 +489,13 @@ function handleSearch() {
     } else if (currentFilter === 'approved') {
         finalResults = filtered.filter(item => {
             const isOverdue = checkIfOverdue(item.f);
-            const status = (item.s || '').trim().toLowerCase();
-            const isApproved = status === 'aprovado' || status === '';
+            const isApproved = isApprovedStatus(item.s);
             return !isOverdue && isApproved;
         });
     } else if (currentFilter === 'blocked') {
         finalResults = filtered.filter(item => {
             const isOverdue = checkIfOverdue(item.f);
-            const status = (item.s || '').trim().toLowerCase();
-            const isApproved = status === 'aprovado' || status === '';
+            const isApproved = isApprovedStatus(item.s);
             return isOverdue || !isApproved;
         });
     }
@@ -531,8 +531,7 @@ function createModernCard(item) {
     const card = document.createElement('article');
     const isOverdue = checkIfOverdue(item.f);
     const dateDisplay = formatDisplayDate(item.f);
-    const status = (item.s || '').trim().toLowerCase();
-    const isApproved = status === 'aprovado' || status === '';
+    const isApproved = isApprovedStatus(item.s);
     const isBlocked = isOverdue || !isApproved;
     const statusLabel = isOverdue ? 'Vencido' : (isApproved ? 'Liberado' : (item.s || 'Pendente'));
     const itemJson = JSON.stringify(item).replace(/'/g, "&#39;");
