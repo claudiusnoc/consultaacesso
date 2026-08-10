@@ -37,6 +37,35 @@ test('sincroniza o relatório único exportado pelo portal', () => {
   assert.equal(records[1].STATUS, 'Aguardando Aprovação');
 });
 
+test('sincroniza OBS junto com o status', () => {
+  const records = [
+    { CHAMADO: '00417077', 'ID DETENTORA': 'TCMG001', STATUS: 'Aguardando Aprovação', 'OBSERVAÇÕES': '' },
+  ];
+  const report = {
+    complete: true,
+    observationField: 'obs',
+    rows: [
+      { id: '00417077', idSiteacessar: 'TCMG001', statu: 'Aprovado', obs: 'Carta encaminhada ao local.' },
+    ],
+  };
+  const result = synchronizeRecords(records, report);
+  assert.equal(result.updated, 1);
+  assert.equal(result.statusUpdated, 1);
+  assert.equal(result.observationUpdated, 1);
+  assert.equal(records[0].STATUS, 'Liberado');
+  assert.equal(records[0]['OBSERVAÇÕES'], 'Carta encaminhada ao local.');
+});
+
+test('aceita motivositebloqText como campo de OBS do portal', () => {
+  const records = [{ CHAMADO: '00417077', 'ID DETENTORA': 'TCMG001', STATUS: 'Liberado', 'OBSERVAÇÕES': '' }];
+  const result = synchronizeRecords(records, {
+    complete: true,
+    rows: [{ id: '00417077', idSiteacessar: 'TCMG001', statu: 'Aprovado', motivositebloqText: 'Observação do portal' }],
+  });
+  assert.equal(result.observationUpdated, 1);
+  assert.equal(records[0]['OBSERVAÇÕES'], 'Observação do portal');
+});
+
 test('bloqueia status conflitantes no relatório completo', () => {
   const records = [{ CHAMADO: '00417077', 'ID DETENTORA': 'TCMG001', STATUS: 'Aguardando Aprovação' }];
   const report = {

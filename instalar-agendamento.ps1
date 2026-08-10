@@ -16,7 +16,12 @@ if ($startAt -le (Get-Date)) { $startAt = $startAt.AddDays(1) }
 $arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$updateScript`" -Publicar"
 $action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $arguments -WorkingDirectory $PSScriptRoot
 $trigger = New-ScheduledTaskTrigger -Daily -DaysInterval $IntervaloDias -At $startAt
-$settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Hours 1)
+$settings = New-ScheduledTaskSettingsSet `
+    -StartWhenAvailable `
+    -ExecutionTimeLimit (New-TimeSpan -Hours 1) `
+    -RestartCount 2 `
+    -RestartInterval (New-TimeSpan -Minutes 5) `
+    -MultipleInstances IgnoreNew
 
 Register-ScheduledTask `
     -TaskName $NomeTarefa `

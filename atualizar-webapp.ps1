@@ -15,6 +15,26 @@ if (-not (Test-Path -LiteralPath $csvPath)) { throw 'chamados.csv não encontrad
 if (-not (Test-Path -LiteralPath $syncScript)) { throw 'scripts\sync-chamados.mjs não encontrado.' }
 if (-not (Test-Path -LiteralPath $exportScript)) { throw 'scripts\exportar-relatorio-portal.ps1 não encontrado.' }
 
+function Invoke-GitWithRetry {
+    param(
+        [Parameter(Mandatory)][string[]]$Arguments,
+        [Parameter(Mandatory)][string]$FailureMessage,
+        [int]$MaxAttempts = 3
+    )
+
+    for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
+        & git -c $gitConfig -C $repo @Arguments
+        $exitCode = $LASTEXITCODE
+        if ($exitCode -eq 0) { return }
+        if ($attempt -lt $MaxAttempts) {
+            $delay = 5 * $attempt
+            Write-Warning ("Git falhou (tentativa {0}/{1}); nova tentativa em {2}s." -f $attempt, $MaxAttempts, $delay)
+            Start-Sleep -Seconds $delay
+        }
+    }
+    throw $FailureMessage
+}
+
 if ($Publicar) {
     # A exceção vale apenas para este processo e não altera a configuração global do Git.
     $gitConfig = "safe.directory=$repo"
@@ -45,16 +65,35 @@ if (-not $RelatorioPortal) {
     if (-not (Test-Path -LiteralPath $reportDirectory)) { New-Item -ItemType Directory -Path $reportDirectory | Out-Null }
     $RelatorioPortal = Join-Path $reportDirectory ("webapp-status-{0}.json" -f (Get-Date -Format 'yyyyMMdd-HHmmss'))
     Write-Host "Extraindo um único relatório para os $($rows.Count) chamado(s) do controle..."
-    & $exportScript -BaseCsv $csvPath -Saida $RelatorioPortal -ProjetoPortal $ProjetoPortal
-    if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $RelatorioPortal)) {
+    $exportSucceeded = $false
+    $maxExportAttempts = 3
+    for ($attempt = 1; $attempt -le $maxExportAttempts; $attempt++) {
+        try {
+            Remove-Item -LiteralPath $RelatorioPortal -Force -ErrorAction SilentlyContinue
+            Remove-Item -LiteralPath "$RelatorioPortal.tmp" -Force -ErrorAction SilentlyContinue
+            & $exportScript -BaseCsv $csvPath -Saida $RelatorioPortal -ProjetoPortal $ProjetoPortal
+            if (-not (Test-Path -LiteralPath $RelatorioPortal)) {
+                throw 'O exportador não gerou um relatório válido.'
+            }
+            $exportSucceeded = $true
+            break
+        } catch {
+            if ($attempt -ge $maxExportAttempts) {
+                throw "Falha na extração somente leitura do relatório do portal após $maxExportAttempts tentativas. Último erro: $($_.Exception.Message)"
+            }
+            $delay = 5 * $attempt
+            Write-Warning ("Falha transitória ao extrair o relatório (tentativa {0}/{1}); nova tentativa em {2}s." -f $attempt, $maxExportAttempts, $delay)
+            Start-Sleep -Seconds $delay
+        }
+    }
+    if (-not $exportSucceeded) {
         throw 'Falha na extração somente leitura do relatório do portal.'
     }
 }
 
 # Primeiro extrai e valida o relatório do portal. Só depois consulta o GitHub.
 if ($Publicar) {
-    git -c $gitConfig -C $repo fetch origin main --quiet
-    if ($LASTEXITCODE -ne 0) { throw 'Falha ao consultar a versão atual da branch main no GitHub.' }
+    Invoke-GitWithRetry -Arguments @('fetch', 'origin', 'main', '--quiet') -FailureMessage 'Falha ao consultar a versão atual da branch main no GitHub.'
     $localHead = (git -c $gitConfig -C $repo rev-parse HEAD).Trim()
     $remoteHead = (git -c $gitConfig -C $repo rev-parse origin/main).Trim()
     if ($localHead -ne $remoteHead) {
@@ -86,7 +125,7 @@ $duplicates = @($validatedRows | Group-Object 'ID DETENTORA' | Where-Object { $_
 if ($validatedRows.Count -ne $rows.Count) { throw 'A sincronização alterou indevidamente a quantidade de linhas.' }
 if ($duplicates.Count -gt 0) { throw 'A sincronização criou IDs de detentora duplicados.' }
 
-Write-Host ("Sincronização validada: {0} linha(s), {1} correspondência(s), {2} atualização(ões), {3} pendência(s) sem correspondência." -f $summary.rows, $summary.matched, $summary.updated, $summary.missing)
+Write-Host ("Sincronização validada: {0} linha(s), {1} correspondência(s), {2} atualização(ões) ({3} status, {4} OBS), {5} pendência(s) sem correspondência." -f $summary.rows, $summary.matched, $summary.updated, $summary.statusUpdated, $summary.observationUpdated, $summary.missing)
 if ($DryRun) {
     Write-Host 'DRY-RUN concluído. O CSV não foi alterado e nada foi publicado.'
     exit 0
@@ -106,7 +145,6 @@ if ($Publicar) {
     git -c $gitConfig -C $repo add -- chamados.csv
     git -c $gitConfig -C $repo commit -m 'Atualiza status dos chamados TBSA'
     if ($LASTEXITCODE -ne 0) { throw 'Falha ao criar o commit de atualização.' }
-    git -c $gitConfig -C $repo push origin main
-    if ($LASTEXITCODE -ne 0) { throw 'Falha ao publicar a atualização no GitHub.' }
+    Invoke-GitWithRetry -Arguments @('push', 'origin', 'main') -FailureMessage 'Falha ao publicar a atualização no GitHub.'
     Write-Host 'Atualização publicada na branch main.'
 }

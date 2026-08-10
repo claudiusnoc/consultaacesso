@@ -91,26 +91,46 @@ function portalCells(row) {
   return [];
 }
 
+function normalizeObservation(value) {
+  return String(value ?? '').trim();
+}
+
+function portalObservation(row) {
+  if (!row || typeof row !== 'object') return '';
+  const key = Object.keys(row).find((candidate) => {
+    const normalized = removeAccents(candidate).toLowerCase().replace(/[^a-z0-9]/g, '');
+    return normalized === 'obs' || normalized.startsWith('obs') || normalized.startsWith('observa') || normalized === 'motivositebloqtext';
+  });
+  return key ? normalizeObservation(row[key]) : '';
+}
+
 export function buildPortalStatusMap(report) {
   const result = new Map();
-  const addStatus = (siteValue, callValue, statusValue) => {
+  const addStatus = (siteValue, callValue, statusValue, observationValue = '') => {
     const site = String(siteValue || '').trim().toUpperCase();
     const call = normalizeCall(callValue);
     const status = normalizeStatus(statusValue);
+    const observation = normalizeObservation(observationValue);
     if (!site || !call || !status) return;
     const key = `${site}|${call}`;
     const previous = result.get(key);
-    if (previous && previous !== status) throw new Error(`Status conflitante no relatório para ${key}.`);
-    result.set(key, status);
+    if (previous && previous.status !== status) throw new Error(`Status conflitante no relatório para ${key}.`);
+    if (previous && previous.observation && observation && previous.observation !== observation) {
+      throw new Error(`OBS conflitante no relatório para ${key}.`);
+    }
+    result.set(key, {
+      status,
+      observation: previous?.observation || observation,
+    });
   };
 
   for (const row of Array.isArray(report?.rows) ? report.rows : []) {
-    addStatus(row?.idSiteacessar, row?.id, row?.statu);
+    addStatus(row?.idSiteacessar, row?.id, row?.statu, row?.obs ?? portalObservation(row));
   }
   for (const [siteValue, rows] of Object.entries(report?.calls || {})) {
     for (const rawRow of Array.isArray(rows) ? rows : []) {
       const cells = portalCells(rawRow);
-      addStatus(siteValue, cells[0], cells[12]);
+      addStatus(siteValue, cells[0], cells[12], cells[13]);
     }
   }
   return result;
@@ -119,25 +139,35 @@ export function buildPortalStatusMap(report) {
 export function synchronizeRecords(records, report) {
   const portalStatuses = buildPortalStatusMap(report);
   let updated = 0;
+  let statusUpdated = 0;
+  let observationUpdated = 0;
   let matched = 0;
   const missing = [];
 
   for (const record of records) {
     const site = String(record['ID DETENTORA'] || '').trim().toUpperCase();
     const call = normalizeCall(record.CHAMADO);
-    const portalStatus = portalStatuses.get(`${site}|${call}`);
-    if (!portalStatus) {
+    const portalData = portalStatuses.get(`${site}|${call}`);
+    if (!portalData) {
       if (report?.complete === true || normalizeStatus(record.STATUS) !== 'Liberado') missing.push({ site, chamado: call });
       continue;
     }
     matched += 1;
-    if (record.STATUS !== portalStatus) {
-      record.STATUS = portalStatus;
-      updated += 1;
+    let rowUpdated = false;
+    if (record.STATUS !== portalData.status) {
+      record.STATUS = portalData.status;
+      statusUpdated += 1;
+      rowUpdated = true;
     }
+    if (String(record['OBSERVAÇÕES'] ?? '') !== portalData.observation) {
+      record['OBSERVAÇÕES'] = portalData.observation;
+      observationUpdated += 1;
+      rowUpdated = true;
+    }
+    if (rowUpdated) updated += 1;
   }
 
-  return { updated, matched, missing };
+  return { updated, statusUpdated, observationUpdated, matched, missing };
 }
 
 function argumentValue(args, name) {
@@ -163,13 +193,17 @@ async function main() {
   if (uniqueSites.size !== originalCount) throw new Error('ID DETENTORA duplicado no CSV base.');
 
   const report = JSON.parse((await fs.readFile(reportPath, 'utf8')).replace(/^\uFEFF/, ''));
+  if (!String(report?.observationField || '').trim()) {
+    throw new Error('Relatório sem o campo OBS; sincronização bloqueada para não apagar observações.');
+  }
   const sync = synchronizeRecords(records, report);
   const statusCounts = Object.fromEntries(
     [...records.reduce((map, record) => map.set(record.STATUS, (map.get(record.STATUS) || 0) + 1), new Map())]
   );
 
-  if (!dryRun && sync.updated > 0) {
-    const nextContent = serializeCsv(headers, records);
+  const outputHeaders = headers.includes('OBSERVAÇÕES') ? headers : [...headers, 'OBSERVAÇÕES'];
+  if (!dryRun && (sync.updated > 0 || outputHeaders.length !== headers.length)) {
+    const nextContent = serializeCsv(outputHeaders, records);
     const temporaryPath = `${outputPath}.tmp`;
     await fs.writeFile(temporaryPath, nextContent, 'utf8');
     await fs.rename(temporaryPath, outputPath);
@@ -180,7 +214,10 @@ async function main() {
     uniqueSites: uniqueSites.size,
     matched: sync.matched,
     updated: sync.updated,
+    statusUpdated: sync.statusUpdated,
+    observationUpdated: sync.observationUpdated,
     missing: sync.missing.length,
+    observationField: report.observationField,
     statusCounts,
     dryRun,
     output: outputPath,

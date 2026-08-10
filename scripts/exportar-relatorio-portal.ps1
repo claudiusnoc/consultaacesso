@@ -58,11 +58,16 @@ try {
   const all=await response.json();
   if(!Array.isArray(all)) throw new Error('Formato inesperado do relatorio');
   const normalizeCall=value=>String(value??'').replace(/\D/g,'').replace(/^0+/, '');
+  const observationKey=row=>Object.keys(row||{}).find(key=>{
+    const normalized=String(key).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
+    return normalized==='obs'||normalized.startsWith('obs')||normalized.startsWith('observa')||normalized==='motivositebloqtext';
+  });
   const wanted=new Set(window.__tbsaTargetKeys||[]);
-  const rows=all
+  const selected=all
     .filter(row=>wanted.has(String(row.idSiteacessar??'').trim().toUpperCase()+'|'+normalizeCall(row.id)))
-    .map(row=>({id:row.id,idSiteacessar:row.idSiteacessar,statu:row.statu}));
-  return {complete:true,source:'getDadosChamado.php',generatedAt:new Date().toISOString(),totalPortal:all.length,targets:wanted.size,rows};
+  const obsField=selected.map(observationKey).find(Boolean)||all.map(observationKey).find(Boolean)||'';
+  const rows=selected.map(row=>({id:row.id,idSiteacessar:row.idSiteacessar,statu:row.statu,obs:obsField?(row[obsField]??''):''}));
+  return {complete:true,source:'getDadosChamado.php',generatedAt:new Date().toISOString(),totalPortal:all.length,targets:wanted.size,observationField:obsField,rows};
 })()
 '@
     $encodedExtract = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($extractJavascript))
@@ -71,6 +76,9 @@ try {
 
     if (-not $report.complete -or $report.targets -ne $uniqueTargets.Count) {
         throw 'O relatório retornado não corresponde ao conjunto solicitado.'
+    }
+    if (-not $report.observationField) {
+        throw 'O relatório do portal não contém o campo de observação (motivositebloqText/OBS).'
     }
     $reportRows = @($report.rows)
     $reportKeys = @(
