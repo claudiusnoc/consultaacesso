@@ -82,15 +82,6 @@ function showToast(message, duration = 2400) {
     showToast._timer = setTimeout(() => els.toast.classList.remove('show'), duration);
 }
 
-function hasValidAddress(address) {
-    const value = (address || '').trim();
-    return value !== '' && value.toLowerCase() !== 'não informado' && value.toLowerCase() !== 'nao informado';
-}
-
-function buildMapsSearchUrl(address) {
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address.trim())}`;
-}
-
 async function copyText(text, successMessage, errorMessage) {
     try {
         await navigator.clipboard.writeText(text);
@@ -125,20 +116,6 @@ function populatePage(data) {
     const address = data.e || 'Não informado';
     els.address.textContent = address;
 
-    if (hasValidAddress(address)) {
-        els.address.href = buildMapsSearchUrl(address);
-        els.address.target = '_blank';
-        els.address.rel = 'noopener noreferrer';
-        els.address.removeAttribute('aria-disabled');
-        els.address.tabIndex = 0;
-    } else {
-        els.address.removeAttribute('href');
-        els.address.removeAttribute('target');
-        els.address.removeAttribute('rel');
-        els.address.setAttribute('aria-disabled', 'true');
-        els.address.tabIndex = -1;
-    }
-
     els.statusDot.classList.toggle('is-blocked', isBlocked);
     els.chamado.textContent = `#${data.c || '--'}`;
     els.idTbsa.textContent = data.t || '--';
@@ -154,7 +131,7 @@ function populatePage(data) {
     if (els.copyAll) {
         els.copyAll.disabled = isBlocked;
         els.copyAll.setAttribute('aria-disabled', String(isBlocked));
-        els.copyAll.title = isBlocked ? 'Chamado bloqueado' : 'Copiar todos os dados';
+        els.copyAll.title = isBlocked ? 'Chamado bloqueado' : 'Copiar mensagem para o NOC';
     }
 
     window._ticketData = data;
@@ -164,7 +141,11 @@ function populatePage(data) {
 }
 
 function buildCopyAllText(data) {
-    return `CHAMADO #${data.c || '--'} | TBSA: ${data.t || '--'} | CLARO: ${data.l || '--'} | ENDERECO: ${data.e || 'Não informado'} | VÁLIDO ATÉ ${window._dateDisplay || '--/--/----'} | STATUS: ${window._statusLabel || '--'} | OBS: ${data.o || 'Sem observações.'}`;
+    return [
+        'Olá, NOC TBSA! preciso acessar o site abaixo:',
+        `*ID da detentora: ${data.t || '--'}*`,
+        `*Número do chamado: #${data.c || '--'}*`
+    ].join('\n');
 }
 
 function playTicketCopyAnimation() {
@@ -192,7 +173,7 @@ if (els.copyAll) {
         const data = window._ticketData;
         if (!data || els.copyAll.disabled) return;
         playTicketCopyAnimation();
-        copyText(buildCopyAllText(data), 'Dados copiados com sucesso!', 'Erro ao copiar dados.');
+        copyText(buildCopyAllText(data), 'Mensagem copiada!', 'Erro ao copiar mensagem.');
     });
 }
 

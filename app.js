@@ -4,7 +4,8 @@ const CONFIG = {
     CACHE_TTL: 5 * 60 * 1000,
     DEBOUNCE_DELAY: 300,
     FETCH_TIMEOUT: 6000,
-    MAX_RESULTS: 100
+    MAX_RESULTS: 100,
+    WHATSAPP_NOC: '552123919487'
 };
 
 let dataStore = [];
@@ -25,6 +26,7 @@ const Elements = {
     statBad: document.getElementById('stat-bad'),
     filterChips: document.querySelectorAll('.filter-chip'),
     baseTotal: document.getElementById('base-total'),
+    baseTotalCopy: document.getElementById('base-total-copy'),
     resultsTitle: document.getElementById('results-title'),
     resultsSummary: document.getElementById('results-summary')
 };
@@ -44,6 +46,7 @@ const DetailEls = {
     obsSection: document.getElementById('detail-obs-section'),
     copyChamado: document.getElementById('copy-chamado-btn'),
     copyAll: document.getElementById('copy-all-btn'),
+    nocWhatsApp: document.getElementById('noc-whatsapp-btn'),
     ticketWrapper: document.getElementById('ticket-wrapper'),
 };
 const obsBlock = DetailEls.obs ? DetailEls.obs.closest('.obs-block') : null;
@@ -80,7 +83,13 @@ function showToast(message, duration) {
 
 function updateBaseSummary() {
     if (!Elements.baseTotal) return;
-    Elements.baseTotal.textContent = dataStore.length ? String(dataStore.length) : 'Nenhum';
+    const total = dataStore.length;
+    Elements.baseTotal.textContent = total ? String(total) : 'Nenhum';
+    if (Elements.baseTotalCopy) {
+        Elements.baseTotalCopy.textContent = total === 1
+            ? 'chamado cadastrado para consulta.'
+            : 'chamados cadastrados para consulta.';
+    }
 }
 
 function updateResultsHeading(title, summary) {
@@ -126,13 +135,16 @@ function isApprovedStatus(status) {
     return normalizeStatus(status) === 'Liberado';
 }
 
-function hasValidAddress(address) {
-    const value = (address || '').trim();
-    return value !== '' && value.toLowerCase() !== 'não informado' && value.toLowerCase() !== 'nao informado';
+function buildNocMessage(data) {
+    return [
+        'Olá, NOC TBSA! preciso acessar o site abaixo:',
+        `*ID da detentora: ${data.t || '--'}*`,
+        `*Número do chamado: #${data.c || '--'}*`
+    ].join('\n');
 }
 
-function buildMapsSearchUrl(address) {
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address.trim())}`;
+function buildNocWhatsAppUrl(data) {
+    return `https://wa.me/${CONFIG.WHATSAPP_NOC}?text=${encodeURIComponent(buildNocMessage(data))}`;
 }
 
 async function copyText(text, successMessage, errorMessage) {
@@ -157,7 +169,7 @@ async function copyText(text, successMessage, errorMessage) {
 }
 
 function buildCopyAllText(data) {
-    return `CHAMADO #${data.c || '--'} | TBSA: ${data.t || '--'} | CLARO: ${data.l || '--'} | ENDERECO: ${data.e || 'Não informado'} | VÁLIDO ATÉ ${window._dateDisplay || '--/--/----'} | STATUS: ${window._statusLabel || '--'} | OBS: ${data.o || 'Sem observações.'}`;
+    return buildNocMessage(data);
 }
 
 function playTicketCopyAnimation() {
@@ -185,7 +197,9 @@ function playTicketCopyAnimation() {
 function populatePage(data) {
     const isOverdue = checkIfOverdue(data.f);
     const isApproved = isApprovedStatus(data.s);
-    const isBlocked = isOverdue || !isApproved;
+    const normalizedStatus = normalizeStatus(data.s);
+    const isAwaiting = !isOverdue && normalizedStatus === 'Aguardando Aprovação';
+    const isBlocked = isOverdue || (!isApproved && !isAwaiting);
     const statusLabel = isOverdue ? 'Vencido' : (isApproved ? 'Liberado' : (data.s || 'Bloqueado'));
 
     DetailEls.siteCode.textContent = data.t || '--';
@@ -195,20 +209,6 @@ function populatePage(data) {
     DetailEls.status.textContent = statusLabel;
     const address = data.e || 'Não informado';
     DetailEls.address.textContent = address;
-
-    if (hasValidAddress(address)) {
-        DetailEls.address.href = buildMapsSearchUrl(address);
-        DetailEls.address.target = '_blank';
-        DetailEls.address.rel = 'noopener noreferrer';
-        DetailEls.address.removeAttribute('aria-disabled');
-        DetailEls.address.tabIndex = 0;
-    } else {
-        DetailEls.address.removeAttribute('href');
-        DetailEls.address.removeAttribute('target');
-        DetailEls.address.removeAttribute('rel');
-        DetailEls.address.setAttribute('aria-disabled', 'true');
-        DetailEls.address.tabIndex = -1;
-    }
 
     DetailEls.statusDot.classList.toggle('is-blocked', isBlocked);
     DetailEls.chamado.textContent = `#${data.c || '--'}`;
@@ -224,7 +224,12 @@ function populatePage(data) {
     if (DetailEls.copyAll) {
         DetailEls.copyAll.disabled = isBlocked;
         DetailEls.copyAll.setAttribute('aria-disabled', String(isBlocked));
-        DetailEls.copyAll.title = isBlocked ? 'Chamado bloqueado' : 'Copiar todos os dados';
+        DetailEls.copyAll.title = isBlocked ? 'Chamado bloqueado' : 'Copiar mensagem para o NOC';
+    }
+
+    if (DetailEls.nocWhatsApp) {
+        DetailEls.nocWhatsApp.href = buildNocWhatsAppUrl(data);
+        DetailEls.nocWhatsApp.setAttribute('aria-label', `Falar com o NOC TBSA no WhatsApp sobre o chamado ${data.c || ''}`);
     }
 
     window._ticketData = data;
@@ -238,6 +243,7 @@ function showScreen(screenId, data) {
         if (screenId === 'detail') {
             document.body.classList.add('showing-detail');
             if (data) populatePage(data);
+            window.scrollTo(0, 0);
             document.title = `Detalhe: ${data ? (data.t || 'Chamado') : 'Chamado'} - EQS`;
         } else {
             document.body.classList.remove('showing-detail');
@@ -375,33 +381,49 @@ async function fetchRemoteData(silent) {
 }
 
 function parseCSV(text) {
-    const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
-    if (lines.length === 0) return [];
-    const headers = parseCSVLine(lines[0]);
-    return lines.slice(1).map(line => {
-        const values = parseCSVLine(line);
+    const rows = [];
+    let row = [];
+    let field = '';
+    let quoted = false;
+    const input = String(text || '').replace(/^\uFEFF/, '');
+
+    for (let index = 0; index < input.length; index += 1) {
+        const character = input[index];
+        if (character === '"') {
+            if (quoted && input[index + 1] === '"') {
+                field += '"';
+                index += 1;
+            } else {
+                quoted = !quoted;
+            }
+        } else if (character === ',' && !quoted) {
+            row.push(field);
+            field = '';
+        } else if ((character === '\n' || character === '\r') && !quoted) {
+            if (character === '\r' && input[index + 1] === '\n') index += 1;
+            row.push(field);
+            if (row.some(value => value !== '')) rows.push(row);
+            row = [];
+            field = '';
+        } else {
+            field += character;
+        }
+    }
+
+    if (field !== '' || row.length > 0) {
+        row.push(field);
+        if (row.some(value => value !== '')) rows.push(row);
+    }
+
+    if (rows.length === 0) return [];
+    const headers = rows[0].map(value => value.trim());
+    return rows.slice(1).map(values => {
         const obj = {};
-        headers.forEach((header, i) => {
-            obj[header.trim()] = values[i] ? values[i].trim() : '';
+        headers.forEach((header, index) => {
+            obj[header] = String(values[index] || '').trim();
         });
         return obj;
     });
-}
-
-function parseCSVLine(line) {
-    const result = [];
-    let current = '';
-    let inQuotes = false;
-    for (let i = 0; i < line.length; i++) {
-        const char = line[i];
-        if (char === '"') {
-            if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
-            else { inQuotes = !inQuotes; }
-        } else if (char === ',' && !inQuotes) { result.push(current); current = ''; }
-        else { current += char; }
-    }
-    result.push(current);
-    return result;
 }
 
 function removeAccents(str) {
@@ -532,23 +554,28 @@ function createModernCard(item) {
     const isOverdue = checkIfOverdue(item.f);
     const dateDisplay = formatDisplayDate(item.f);
     const isApproved = isApprovedStatus(item.s);
-    const isBlocked = isOverdue || !isApproved;
+    const normalizedStatus = normalizeStatus(item.s);
+    const isAwaiting = !isOverdue && normalizedStatus === 'Aguardando Aprovação';
+    const isBlocked = isOverdue || (!isApproved && !isAwaiting);
     const statusLabel = isOverdue ? 'Vencido' : (isApproved ? 'Liberado' : (item.s || 'Pendente'));
     const itemJson = JSON.stringify(item).replace(/'/g, "&#39;");
-    card.className = `result-card${isBlocked ? ' is-blocked' : ''}`;
+    const statusVariant = isApproved ? 'is-approved' : (isAwaiting ? 'is-awaiting' : 'is-blocked');
+    card.className = `result-card result-card--split ${statusVariant}`;
 
     card.innerHTML = `
         <div class="result-card__identity">
             <span class="result-card__ticket">Chamado #${escapeHTML(item.c)}</span>
             <h3>${escapeHTML(item.t)}</h3>
             <p>Site ${escapeHTML(item.l)}</p>
+            <span class="result-status ${statusVariant}">${escapeHTML(statusLabel)}</span>
         </div>
-        <div class="result-card__meta">
+        <div class="result-card__details">
+            <div class="result-card__meta">
             <span><small>Validade</small><strong>${escapeHTML(dateDisplay)}</strong></span>
             <span><small>Cluster</small><strong>${escapeHTML(item.cluster || 'Não informado')}</strong></span>
+            </div>
+            <button class="detail-btn ${isBlocked ? 'is-blocked' : ''}" data-detail='${itemJson}' type="button">Ver detalhes</button>
         </div>
-        <span class="result-status ${isBlocked ? 'is-blocked' : 'is-approved'}">${escapeHTML(statusLabel)}</span>
-        <button class="detail-btn ${isBlocked ? 'is-blocked' : ''}" data-detail='${itemJson}' type="button">Ver detalhes</button>
         ${item.o ? `<p class="result-card__note">${escapeHTML(item.o)}</p>` : ''}
     `;
     return card;
@@ -595,7 +622,7 @@ if (DetailEls.copyAll) {
         const data = window._ticketData;
         if (!data || DetailEls.copyAll.disabled) return;
         playTicketCopyAnimation();
-        copyText(buildCopyAllText(data), 'Dados copiados com sucesso!', 'Erro ao copiar dados.');
+        copyText(buildCopyAllText(data), 'Mensagem copiada!', 'Erro ao copiar mensagem.');
     });
 }
 

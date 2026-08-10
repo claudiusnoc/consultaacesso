@@ -9,6 +9,8 @@ const ASSETS = [
     './logo-eqs.webp',
     './logo-eqs-dark.png',
     './claro-logo.png',
+    './assets/github.svg',
+    './assets/linkedin.svg',
     './fonts/archivo-latin-wght-normal.woff2',
     './fonts/barlow-latin-400-normal.woff2',
     './fonts/barlow-latin-500-normal.woff2',

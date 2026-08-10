@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#121923">
+    <title>Prévia de cards | Consulta TBSA</title>
+    <link rel="stylesheet" href="index.css?v=20260807-portal-4">
+    <link rel="stylesheet" href="card-preview.css">
+</head>
+
+<body class="preview-page">
+    <header class="preview-header">
+        <a class="preview-brand" href="index.html" aria-label="Voltar para a consulta TBSA">
+            <img src="claro-logo.png" alt="">
+            <img src="logo-eqs-dark.png" alt="EQS Engenharia">
+            <span>Consulta TBSA</span>
+        </a>
+        <a class="preview-back" href="index.html">Voltar à consulta</a>
+    </header>
+
+    <main class="preview-shell">
+        <div class="preview-intro">
+            <p class="preview-kicker">Prévia de alternativas</p>
+            <h1>Escolha o padrão dos chamados</h1>
+            <p>Os cinco modelos usam os mesmos dados. A diferença está na hierarquia, no ritmo e na ação principal.</p>
+        </div>
+
+        <div class="preview-grid">
+            <section class="preview-option">
+                <div class="option-heading">
+                    <span>01</span>
+                    <div>
+                        <h2>Lista operacional</h2>
+                        <p>Leitura rápida, parecida com uma fila de trabalho.</p>
+                    </div>
+                </div>
+                <article class="ticket ticket-list">
+                    <div class="ticket-list__main">
+                        <span class="ticket-label">Chamado #427574</span>
+                        <h3>TCMGBHO0003</h3>
+                        <p>Site MGBEL03</p>
+                    </div>
+                    <div class="ticket-list__meta">
+                        <span><small>Validade</small><strong>07/10/2026</strong></span>
+                        <span><small>Cluster</small><strong>BH</strong></span>
+                    </div>
+                    <span class="ticket-status is-pending">Aguardando Aprovação</span>
+                    <button type="button">Ver detalhes</button>
+                </article>
+            </section>
+
+            <section class="preview-option">
+                <div class="option-heading">
+                    <span>02</span>
+                    <div>
+                        <h2>Ticket destacado</h2>
+                        <p>O número do chamado conduz a leitura.</p>
+                    </div>
+                </div>
+                <article class="ticket ticket-featured">
+                    <div class="ticket-featured__bar">
+                        <span>Chamado operacional</span>
+                        <span class="ticket-status is-approved">Liberado</span>
+                    </div>
+                    <div class="ticket-featured__body">
+                        <div>
+                            <small>ID da detentora</small>
+                            <h3>TCMGSBA0001</h3>
+                            <p>MGSBA01 · SUL</p>
+                        </div>
+                        <strong class="ticket-featured__number">#417122</strong>
+                    </div>
+                    <div class="ticket-featured__footer">
+                        <span>Validade <b>22/09/2026</b></span>
+                        <button type="button">Abrir chamado</button>
+                    </div>
+                </article>
+            </section>
+
+            <section class="preview-option">
+                <div class="option-heading">
+                    <span>03</span>
+                    <div>
+                        <h2>Resumo em linha</h2>
+                        <p>Mais informação visível, sem empilhar blocos.</p>
+                    </div>
+                </div>
+                <article class="ticket ticket-row">
+                    <div class="ticket-row__call">
+                        <span>Chamado</span>
+                        <strong>#417122</strong>
+                    </div>
+                    <div class="ticket-row__identity">
+                        <strong>TCMGSBA0001</strong>
+                        <span>MGSBA01</span>
+                    </div>
+                    <div class="ticket-row__data">
+                        <span>Validade <b>22/09/2026</b></span>
+                        <span>Cluster <b>SUL</b></span>
+                    </div>
+                    <div class="ticket-row__action">
+                        <span class="ticket-status is-approved">Liberado</span>
+                        <button type="button" aria-label="Ver detalhes do chamado 417122">›</button>
+                    </div>
+                </article>
+            </section>
+
+            <section class="preview-option">
+                <div class="option-heading">
+                    <span>04</span>
+                    <div>
+                        <h2>Identidade dividida</h2>
+                        <p>O ID ganha presença, os metadados ficam em segundo plano.</p>
+                    </div>
+                </div>
+                <article class="ticket ticket-split-preview">
+                    <div class="ticket-split-preview__identity">
+                        <span class="ticket-label">Chamado #427574</span>
+                        <h3>TCMGBHO0003</h3>
+                        <p>MGBEL03</p>
+                        <span class="ticket-status is-pending">Pendente</span>
+                    </div>
+                    <div class="ticket-split-preview__details">
+                        <span><small>Validade</small><b>07/10/2026</b></span>
+                        <span><small>Cluster</small><b>BH</b></span>
+                        <button type="button">Ver detalhes</button>
+                    </div>
+                </article>
+            </section>
+
+            <section class="preview-option">
+                <div class="option-heading">
+                    <span>05</span>
+                    <div>
+                        <h2>Ficha de acesso</h2>
+                        <p>Mais arejado, com uma ação clara no rodapé.</p>
+                    </div>
+                </div>
+                <article class="ticket ticket-sheet">
+                    <div class="ticket-sheet__heading">
+                        <div>
+                            <span class="ticket-label">ID da detentora</span>
+                            <h3>TCMGSBA0001</h3>
+                        </div>
+                        <span class="ticket-status is-approved">Liberado</span>
+                    </div>
+                    <div class="ticket-sheet__fields">
+                        <span><small>Chamado</small><b>#417122</b></span>
+                        <span><small>Site</small><b>MGSBA01</b></span>
+                        <span><small>Cluster</small><b>SUL</b></span>
+                        <span><small>Validade</small><b>22/09/2026</b></span>
+                    </div>
+                    <button type="button">Abrir detalhes do acesso</button>
+                </article>
+            </section>
+        </div>
+    </main>
+
+    <footer class="preview-footer">Prévia interna · os dados são apenas exemplos de composição.</footer>
+</body>
+
+</html>
