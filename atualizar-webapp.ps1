@@ -16,19 +16,13 @@ if (-not (Test-Path -LiteralPath $syncScript)) { throw 'scripts\sync-chamados.mj
 if (-not (Test-Path -LiteralPath $exportScript)) { throw 'scripts\exportar-relatorio-portal.ps1 não encontrado.' }
 
 if ($Publicar) {
-    $branch = (git -C $repo branch --show-current).Trim()
+    # A exceção vale apenas para este processo e não altera a configuração global do Git.
+    $gitConfig = "safe.directory=$repo"
+    $branch = (git -c $gitConfig -C $repo branch --show-current).Trim()
     if ($branch -ne 'main') { throw "Publicação automática permitida somente na branch main. Branch atual: $branch" }
-    $initialChanges = @(git -C $repo status --porcelain)
+    $initialChanges = @(git -c $gitConfig -C $repo status --porcelain)
     if ($initialChanges.Count -gt 0) {
         throw "Publicação bloqueada: o repositório possui alterações locais antes da consulta.`n$($initialChanges -join [Environment]::NewLine)"
-    }
-    git -C $repo fetch origin main --quiet
-    if ($LASTEXITCODE -ne 0) { throw 'Falha ao consultar a versão atual da branch main no GitHub.' }
-    $localHead = (git -C $repo rev-parse HEAD).Trim()
-    $remoteHead = (git -C $repo rev-parse origin/main).Trim()
-    if ($localHead -ne $remoteHead) {
-        git -C $repo merge --ff-only origin/main
-        if ($LASTEXITCODE -ne 0) { throw 'A branch main local divergiu do GitHub. Publicação bloqueada.' }
     }
 }
 
@@ -55,6 +49,21 @@ if (-not $RelatorioPortal) {
     if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $RelatorioPortal)) {
         throw 'Falha na extração somente leitura do relatório do portal.'
     }
+}
+
+# Primeiro extrai e valida o relatório do portal. Só depois consulta o GitHub.
+if ($Publicar) {
+    git -c $gitConfig -C $repo fetch origin main --quiet
+    if ($LASTEXITCODE -ne 0) { throw 'Falha ao consultar a versão atual da branch main no GitHub.' }
+    $localHead = (git -c $gitConfig -C $repo rev-parse HEAD).Trim()
+    $remoteHead = (git -c $gitConfig -C $repo rev-parse origin/main).Trim()
+    if ($localHead -ne $remoteHead) {
+        git -c $gitConfig -C $repo merge --ff-only origin/main
+        if ($LASTEXITCODE -ne 0) { throw 'A branch main local divergiu do GitHub. Publicação bloqueada.' }
+    }
+    # O fast-forward pode atualizar a lista de pares; o sincronizador valida a correspondência exata.
+    $rows = @(Import-Csv -LiteralPath $csvPath -Encoding UTF8)
+    if ($rows.Count -eq 0) { throw 'O CSV está vazio após sincronizar com origin/main.' }
 }
 
 $RelatorioPortal = (Resolve-Path -LiteralPath $RelatorioPortal).Path
@@ -84,20 +93,20 @@ if ($DryRun) {
 }
 
 if ($Publicar) {
-    $gitChanges = @(git -C $repo status --porcelain)
+    $gitChanges = @(git -c $gitConfig -C $repo status --porcelain)
     $unexpected = @($gitChanges | Where-Object { $_ -notmatch '^.. chamados\.csv$' })
     if ($unexpected.Count -gt 0) {
         throw "Publicação bloqueada: existem alterações locais além de chamados.csv.`n$($unexpected -join [Environment]::NewLine)"
     }
-    git -C $repo diff --quiet -- chamados.csv
+    git -c $gitConfig -C $repo diff --quiet -- chamados.csv
     if ($LASTEXITCODE -eq 0) {
         Write-Host 'Nenhuma mudança de status para publicar.'
         exit 0
     }
-    git -C $repo add -- chamados.csv
-    git -C $repo commit -m 'Atualiza status dos chamados TBSA'
+    git -c $gitConfig -C $repo add -- chamados.csv
+    git -c $gitConfig -C $repo commit -m 'Atualiza status dos chamados TBSA'
     if ($LASTEXITCODE -ne 0) { throw 'Falha ao criar o commit de atualização.' }
-    git -C $repo push origin main
+    git -c $gitConfig -C $repo push origin main
     if ($LASTEXITCODE -ne 0) { throw 'Falha ao publicar a atualização no GitHub.' }
     Write-Host 'Atualização publicada na branch main.'
 }
