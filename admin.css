@@ -30,6 +30,7 @@
 .file-field__name { overflow-wrap: anywhere; color: var(--muted); font-size: 0.84rem; }
 .import-result { margin-top: 18px; padding: 14px 16px; border: 1px solid rgba(22, 122, 91, 0.28); border-radius: 8px; color: var(--success); background: var(--success-soft); font-weight: 600; line-height: 1.5; }
 .consult-updated-base { display: inline-flex; align-items: center; min-height: 42px; margin-top: 12px; padding: 0 14px; border: 1px solid var(--line-strong); border-radius: 7px; color: var(--copy); font-size: 0.82rem; font-weight: 700; text-decoration: none; }
+.consult-updated-base[hidden] { display: none; }
 .consult-updated-base:hover, .consult-updated-base:focus-visible { border-color: var(--claro); background: var(--claro-soft); color: var(--claro-strong); }
 .logout-button { width: 100%; margin-top: 22px; color: var(--copy); border: 1px solid var(--line); background: transparent; }
 .logout-button:hover { background: var(--surface-soft); }
