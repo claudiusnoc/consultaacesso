@@ -10,7 +10,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="claro-logo.png" type="image/png">
     <link rel="apple-touch-icon" href="claro-logo.png">
-    <link rel="stylesheet" href="index.css?v=20260807-portal-4">
+    <link rel="stylesheet" href="index.css?v=20261024-admin-8">
 </head>
 
 <body>
@@ -31,6 +31,12 @@
 
                 <div class="topbar-actions">
                     <span class="sync-compact" aria-label="Base online"></span>
+                    <a class="import-shortcut" href="admin.html" aria-label="Atualizar a base por planilha" title="Atualizar base">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M5 3.75h10l4 4v12.5H5z"></path>
+                            <path d="M15 3.75v4h4M8 11h8M8 14.5h8M8 18h5"></path>
+                        </svg>
+                    </a>
                     <div class="theme-control">
                         <input type="checkbox" id="theme-check">
                         <label for="theme-check" aria-label="Alternar tema claro e escuro">
@@ -232,7 +238,8 @@
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-    <script src="app.js?v=20260807-portal-4"></script>
+    <script src="supabase-config.js"></script>
+    <script src="app.js?v=20261024-supabase-21"></script>
 </body>
 
 </html>

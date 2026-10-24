@@ -222,6 +222,36 @@ body.showing-detail .app-footer { display: none; }
   box-shadow: 0 0 0 4px rgba(69, 181, 121, 0.12);
 }
 
+.import-shortcut {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 7px;
+  color: #d9e1ec;
+  text-decoration: none;
+  transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease;
+}
+
+.import-shortcut svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.import-shortcut:hover,
+.import-shortcut:focus-visible {
+  border-color: rgba(255, 255, 255, 0.42);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
 .theme-control input { position: absolute; opacity: 0; pointer-events: none; }
 
 .theme-control label {
@@ -1031,7 +1061,8 @@ body.dark-mode .social-link img { filter: invert(1); }
   .brand-divider { display: none; }
   .brand-copy small { display: none; }
   .brand-copy strong { font-size: 0.76rem; }
-  .topbar-actions { gap: 10px; }
+  .topbar-actions { gap: 8px; }
+  .import-shortcut { width: 38px; height: 38px; }
   .theme-control label { width: 58px; height: 30px; font-size: 0; }
   .theme-control label > span:not(.toggle-knob) { font-size: 0; }
   .theme-control label > span:first-child::after,

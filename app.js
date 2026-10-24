@@ -1,12 +1,15 @@
 const CONFIG = {
     CSV_URL: './chamados.csv',
-    CACHE_KEY: 'eqs-data-cache-v4',
+    CACHE_KEY: 'eqs-data-cache-v6',
     CACHE_TTL: 5 * 60 * 1000,
     DEBOUNCE_DELAY: 300,
-    FETCH_TIMEOUT: 6000,
+    FETCH_TIMEOUT: 15000,
     MAX_RESULTS: 100,
     WHATSAPP_NOC: '552123919487'
 };
+
+const SUPABASE = window.TBSA_SUPABASE_CONFIG || null;
+const IS_LOCAL_PORTAL = ['127.0.0.1', 'localhost'].includes(window.location.hostname);
 
 let dataStore = [];
 
@@ -265,6 +268,7 @@ function getTicketData() {
     if (encoded) {
         try { return JSON.parse(decodeURIComponent(encoded)); } catch (e) {}
     }
+    if (!params.has('site')) return null;
     try {
         const stored = sessionStorage.getItem('eqs-detail');
         if (stored) return JSON.parse(stored);
@@ -293,16 +297,6 @@ function setCachedData(data) {
 }
 
 async function fetchData() {
-    const cached = getCachedData();
-    if (cached) {
-        dataStore = cached;
-        updateBaseSummary();
-        Elements.spinnerContainer.style.display = 'none';
-        Elements.loadingText.style.display = 'none';
-        Elements.statusSync.innerHTML = '<span class="status-sync-ok">Dados carregados do dispositivo</span>';
-        fetchRemoteData(true);
-        return;
-    }
     showInitialLoading();
     await fetchRemoteData(false);
 }
@@ -326,12 +320,7 @@ async function fetchRemoteData(silent) {
     const timeoutId = setTimeout(() => controller.abort(), CONFIG.FETCH_TIMEOUT);
 
     try {
-        const response = await fetch(CONFIG.CSV_URL, { signal: controller.signal, cache: 'no-store' });
-
-        if (!response || !response.ok) throw new Error('Falha no download');
-
-        const text = await response.text();
-        const remoteData = parseCSV(text);
+        const remoteData = await fetchPublishedAccesses(controller.signal);
 
         dataStore = remoteData.map(item => ({
             c: item['CHAMADO'] || '',
@@ -339,7 +328,7 @@ async function fetchRemoteData(silent) {
             l: item['SITE'] || '',
             f: item['VALIDADE'] || '',
             s: normalizeStatus(item['STATUS']),
-            o: item['OBSERVAÇÕES'] || '',
+            o: item['OBSERVAÇÕES'] || item['OBSERVACOES'] || '',
             e: item['ENDEREÇO'] || item['ENDERECO'] || '',
             cluster: item['CLUSTER'] || '',
             supervisor: item['SUPERVISOR'] || ''
@@ -360,24 +349,64 @@ async function fetchRemoteData(silent) {
         clearTimeout(timeoutId);
     } catch (error) {
         clearTimeout(timeoutId);
-        if (!silent) {
-            dataStore = [];
+        const cached = getCachedData();
+        if (cached) {
+            dataStore = cached;
             updateBaseSummary();
-            updateResultsHeading('Base indisponível', 'Não foi possível ler o arquivo de chamados.');
-            Elements.statusSync.innerHTML = `
-                <div class="status-sync-fail">
-                    <strong>Base de chamados indisponível</strong><br>
-                    Não foi possível carregar o arquivo de dados publicado.<br>
-                    <small>Tente novamente em alguns instantes.</small>
-                </div>
-            `;
+            Elements.statusSync.innerHTML = '<span class="status-sync-ok">Usando a última base salva neste dispositivo</span>';
+            return;
         }
+        dataStore = [];
+        updateBaseSummary();
+        updateResultsHeading('Base indisponível', 'Não foi possível ler o arquivo de chamados.');
+        Elements.statusSync.innerHTML = `
+            <div class="status-sync-fail">
+                <strong>Base de chamados indisponível</strong><br>
+                Não foi possível carregar o arquivo de dados publicado.<br>
+                <small>Tente novamente em alguns instantes.</small>
+            </div>
+        `;
     } finally {
-        if (!silent) {
-            Elements.spinnerContainer.style.display = 'none';
-            Elements.loadingText.style.display = 'none';
-        }
+        Elements.spinnerContainer.style.display = 'none';
+        Elements.loadingText.style.display = 'none';
     }
+}
+
+async function fetchPublishedAccesses(signal) {
+    if (SUPABASE && !IS_LOCAL_PORTAL) {
+        const endpoint = new URL('/rest/v1/portal_acessos', SUPABASE.url);
+        endpoint.searchParams.set('select', 'chamado,id_detentora,site,status,validade,endereco,cluster,supervisor,observacoes');
+        endpoint.searchParams.set('order', 'id_detentora.asc');
+        const response = await fetch(endpoint, {
+            signal,
+            cache: 'no-store',
+            headers: {
+                apikey: SUPABASE.publishableKey,
+                Authorization: `Bearer ${SUPABASE.publishableKey}`,
+                Range: '0-1999'
+            }
+        });
+        if (!response.ok) throw new Error('Falha ao carregar a base publicada no Supabase.');
+        const records = await response.json();
+        if (!Array.isArray(records)) throw new Error('Formato de resposta inválido.');
+        return records.map((item) => ({
+            CHAMADO: item.chamado,
+            'ID DETENTORA': item.id_detentora,
+            SITE: item.site,
+            STATUS: item.status,
+            VALIDADE: item.validade,
+            ENDERECO: item.endereco,
+            CLUSTER: item.cluster,
+            SUPERVISOR: item.supervisor,
+            OBSERVACOES: item.observacoes
+        }));
+    }
+
+    const source = new URL(CONFIG.CSV_URL, window.location.href);
+    source.searchParams.set('atualizado', String(Date.now()));
+    const response = await fetch(source, { signal, cache: 'no-store' });
+    if (!response || !response.ok) throw new Error('Falha no download');
+    return parseCSV(await response.text());
 }
 
 function parseCSV(text) {
@@ -462,7 +491,6 @@ function handleSearch() {
     }
 
     const filtered = dataStore.filter(item => {
-        if (!/^\d{5,}$/.test((item.c || '').trim())) return false;
         const tDesc = removeAccents((item.t || '').toLowerCase());
         const lDesc = removeAccents((item.l || '').toLowerCase());
         const cDesc = removeAccents((item.c || '').toLowerCase());
@@ -685,7 +713,7 @@ window.addEventListener('load', fetchData);
 // PWA Service Worker
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch((error) => {
+        navigator.serviceWorker.register('sw.js?v=20261024-supabase-v20', { updateViaCache: 'none' }).catch((error) => {
             console.warn('Service worker registration failed:', error);
         });
     });

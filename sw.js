@@ -1,10 +1,10 @@
-const CACHE_NAME = 'eqs-consulta-v14';
+const CACHE_NAME = 'eqs-consulta-v20';
 const ASSETS = [
     './',
     './index.html',
     './index.css',
     './app.js',
-    './chamados.csv',
+    './supabase-config.js',
     './manifest.json',
     './logo-eqs.webp',
     './logo-eqs-dark.png',
@@ -34,8 +34,14 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
-    if (url.pathname.endsWith('/chamados.csv') || url.pathname.endsWith('/app.js')) {
-        event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
+    if (url.origin !== self.location.origin) return;
+    if (url.pathname.startsWith('/api/')) return;
+    if (url.pathname.endsWith('/chamados.csv')) {
+        event.respondWith(fetch(event.request, { cache: 'no-store' }));
+        return;
+    }
+    if (url.pathname.endsWith('/app.js') || url.pathname.endsWith('/supabase-config.js')) {
+        event.respondWith(fetch(event.request, { cache: 'no-store' }).catch(() => caches.match(event.request)));
         return;
     }
 

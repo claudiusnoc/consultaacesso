@@ -1,5 +1,6 @@
 [CmdletBinding()]
 param(
+    [Parameter(Mandatory)][string]$Planilha,
     [string]$RelatorioPortal,
     [string]$ProjetoPortal = 'C:\Users\Claudius\Documents\PORTAL TBSA MINAS GERAIS',
     [switch]$Publicar,
@@ -7,6 +8,12 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+$replacement = Join-Path $PSScriptRoot 'atualizar-acessos.ps1'
+if (-not (Test-Path -LiteralPath $replacement)) { throw 'atualizar-acessos.ps1 não encontrado.' }
+Write-Warning 'atualizar-webapp.ps1 foi substituído pelo fluxo baseado na planilha ACESSOS TBSA.'
+& $replacement -Planilha $Planilha -Publicar:$Publicar -DryRun:$DryRun
+exit $LASTEXITCODE
+
 $repo = $PSScriptRoot
 $csvPath = Join-Path $repo 'chamados.csv'
 $syncScript = Join-Path $repo 'scripts\sync-chamados.mjs'

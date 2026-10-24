@@ -1,0 +1,4 @@
+project_id = "xecbtwhrlrachuixlplm"
+
+[functions.importar-acessos]
+verify_jwt = false

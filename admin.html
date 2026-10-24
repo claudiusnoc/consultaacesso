@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#121923">
+    <meta name="description" content="Atualização autorizada da base de acessos TBSA.">
+    <title>Atualizar base | Consulta TBSA</title>
+    <link rel="icon" href="claro-logo.png" type="image/png">
+    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body class="admin-page">
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a class="brand" href="index.html" aria-label="Voltar à consulta TBSA">
+                <span class="brand-mark" aria-hidden="true"><img src="claro-logo.png" alt=""></span>
+                <img class="brand-eqs" src="logo-eqs-dark.png" alt="EQS Engenharia">
+                <span class="brand-divider" aria-hidden="true"></span>
+                <span class="brand-copy"><strong>Consulta TBSA</strong><small>Atualização da base</small></span>
+            </a>
+            <a class="admin-back" href="index.html">Voltar à consulta</a>
+        </div>
+    </header>
+
+    <main class="admin-main" id="main-content">
+        <section class="admin-intro" aria-labelledby="admin-title">
+            <p class="page-label">Área administrativa</p>
+            <h1 id="admin-title">Atualizar acessos publicados</h1>
+            <p>Envie a exportação <strong>ACESSOS TBSA.xlsx</strong>. A base é validada antes de substituir os dados de consulta.</p>
+        </section>
+
+        <section class="admin-card" id="authentication-panel" aria-labelledby="authentication-title">
+            <div class="admin-card__heading">
+                <p class="section-kicker">Etapa 1</p>
+                <h2 id="authentication-title">Autorizar atualização</h2>
+                <p>Informe o código administrativo para liberar o envio da planilha.</p>
+            </div>
+            <form id="login-form" novalidate>
+                <label for="access-code">Código de acesso</label>
+                <div class="code-row">
+                    <input id="access-code" name="access-code" type="password" autocomplete="current-password" minlength="8" required aria-describedby="access-code-help access-code-error">
+                    <button class="secondary-button" id="toggle-code" type="button" aria-pressed="false">Mostrar</button>
+                </div>
+                <p class="form-help" id="access-code-help">O código não é salvo no dispositivo.</p>
+                <p class="form-error" id="access-code-error" role="alert" hidden></p>
+                <button class="primary-button" id="login-button" type="submit">Liberar atualização</button>
+            </form>
+        </section>
+
+        <section class="admin-card" id="upload-panel" aria-labelledby="upload-title" hidden>
+            <div class="admin-card__heading">
+                <p class="section-kicker">Etapa 2</p>
+                <h2 id="upload-title">Importar planilha</h2>
+                <p>São aceitos arquivos <strong>.xlsx</strong> com a aba <strong>Acessos</strong> no padrão exportado pela operação.</p>
+            </div>
+            <form id="upload-form" novalidate>
+                <label class="file-field" for="spreadsheet-file">
+                    <span class="file-field__label">Planilha de acessos</span>
+                    <span class="file-field__action">Selecionar arquivo</span>
+                    <input id="spreadsheet-file" name="planilha" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required aria-describedby="spreadsheet-help spreadsheet-error">
+                    <span class="file-field__name" id="selected-file">Nenhum arquivo selecionado</span>
+                </label>
+                <p class="form-help" id="spreadsheet-help">O arquivo é validado e removido após a importação. A base publicada fica salva no banco de dados.</p>
+                <p class="form-error" id="spreadsheet-error" role="alert" hidden></p>
+                <button class="primary-button" id="upload-button" type="submit">Validar e publicar dados</button>
+            </form>
+            <div class="import-result" id="import-result" role="status" aria-live="polite" hidden></div>
+            <a class="consult-updated-base" id="consult-updated-base" href="index.html" hidden>Consultar base atualizada</a>
+            <button class="logout-button" id="logout-button" type="button">Encerrar sessão administrativa</button>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="supabase-config.js"></script>
+    <script src="admin.js?v=20261024-supabase-18"></script>
+</body>
+</html>
