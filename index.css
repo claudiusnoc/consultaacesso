@@ -2369,3 +2369,64 @@ body.showing-detail.dark-mode:not(.admin-page) .detail-social img { filter: inve
   body:not(.admin-page) .topbar { background: rgba(255, 255, 255, 0.96); backdrop-filter: none; -webkit-backdrop-filter: none; }
   body:not(.admin-page).dark-mode .topbar { background: rgba(17, 32, 52, 0.98); }
 }
+
+/* Compact mobile masthead and a single-line portal credit. */
+body:not(.admin-page) .app-footer {
+  justify-content: center;
+  margin: 0 auto;
+  padding: 20px 12px max(24px, env(safe-area-inset-bottom));
+  text-align: center;
+}
+body:not(.admin-page) .app-footer__credit {
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: .76rem;
+  line-height: 1.45;
+}
+@media (max-width: 700px) {
+  body:not(.admin-page) .topbar { min-height: 68px; margin-top: 12px; border-radius: 20px; }
+  body:not(.admin-page) .topbar-inner {
+    width: min(100% - 20px, 560px);
+    min-height: 66px;
+    align-items: center;
+    gap: 6px;
+    padding-top: 0;
+  }
+  body:not(.admin-page) .brand { flex: 0 0 auto; gap: 7px; }
+  body:not(.admin-page) .brand-mark { width: 34px; height: 34px; flex-basis: 34px; border-radius: 10px; }
+  body:not(.admin-page) .brand-mark img { width: 38px; height: 38px; }
+  body:not(.admin-page) .brand-eqs { width: 60px; height: 24px; }
+  body:not(.admin-page) .brand-divider { display: none; }
+  body:not(.admin-page) .topbar-title {
+    position: static;
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    font-size: clamp(.69rem, 3.25vw, .82rem);
+    text-align: center;
+    text-overflow: clip;
+    transform: none;
+  }
+  body:not(.admin-page) .topbar-actions { flex: 0 0 auto; gap: 5px; }
+  body:not(.admin-page) .import-shortcut { width: 38px; height: 38px; border-radius: 11px; }
+  body:not(.admin-page) .theme-control label { width: 70px; height: 40px; border-radius: 12px; }
+  body:not(.admin-page) .theme-control label > .theme-icon { width: 28px; height: 30px; }
+  body:not(.admin-page) .theme-control .toggle-knob { top: 4px; left: 4px; width: 30px; height: 30px; border-radius: 9px; }
+  body:not(.admin-page) .theme-control input:checked + label .toggle-knob { transform: translateX(32px); }
+}
+@media (max-width: 360px) {
+  body:not(.admin-page) .topbar { width: min(100% - 20px, 560px); }
+  body:not(.admin-page) .topbar-inner { width: min(100% - 14px, 560px); gap: 4px; }
+  body:not(.admin-page) .brand { gap: 5px; }
+  body:not(.admin-page) .brand-mark { width: 30px; height: 30px; flex-basis: 30px; }
+  body:not(.admin-page) .brand-mark img { width: 34px; height: 34px; }
+  body:not(.admin-page) .brand-eqs { width: 50px; height: 21px; }
+  body:not(.admin-page) .topbar-title { font-size: .67rem; }
+  body:not(.admin-page) .topbar-actions { gap: 4px; }
+  body:not(.admin-page) .import-shortcut { width: 36px; height: 36px; }
+  body:not(.admin-page) .theme-control label { width: 64px; }
+  body:not(.admin-page) .theme-control label > .theme-icon { width: 25px; }
+  body:not(.admin-page) .theme-control .toggle-knob { width: 28px; }
+  body:not(.admin-page) .theme-control input:checked + label .toggle-knob { transform: translateX(28px); }
+}
