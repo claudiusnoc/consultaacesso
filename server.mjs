@@ -8,8 +8,6 @@ import { spawn } from 'node:child_process';
 const moduleDirectory = path.dirname(fileURLToPath(import.meta.url));
 const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 const SESSION_TTL_MS = 30 * 60 * 1000;
-const LOGIN_LIMIT = 5;
-const LOGIN_BLOCK_MS = 15 * 60 * 1000;
 
 const MIME_TYPES = {
   '.css': 'text/css; charset=utf-8',
@@ -154,7 +152,6 @@ export function createPortalServer({ rootDir = moduleDirectory, adminCode, runIm
   }
 
   const sessions = new Map();
-  const loginAttempts = new Map();
   const uploadsDir = path.join(rootDir, '.tbsa', 'uploads');
 
   function getSession(req) {
@@ -205,8 +202,6 @@ export function createPortalServer({ rootDir = moduleDirectory, adminCode, runIm
   return createServer(async (req, res) => {
     const requestUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
     const pathname = decodeURIComponent(requestUrl.pathname);
-    const clientIp = req.socket.remoteAddress || 'unknown';
-
     if (pathname === '/healthz') {
       json(res, 200, { status: 'ok' });
       return;
@@ -222,23 +217,12 @@ export function createPortalServer({ rootDir = moduleDirectory, adminCode, runIm
         json(res, 403, { error: 'Origem da solicitação não permitida.' });
         return;
       }
-      const attempt = loginAttempts.get(clientIp);
-      if (attempt?.blockedUntil > Date.now()) {
-        json(res, 429, { error: 'Muitas tentativas. Aguarde 15 minutos para tentar novamente.' });
-        return;
-      }
       try {
         const body = JSON.parse((await readBody(req, 4096)).toString('utf8'));
         if (!secureEquals(body.code, adminCode)) {
-          const failures = (attempt?.failures || 0) + 1;
-          loginAttempts.set(clientIp, {
-            failures,
-            blockedUntil: failures >= LOGIN_LIMIT ? Date.now() + LOGIN_BLOCK_MS : 0,
-          });
           json(res, 401, { error: 'Código inválido. Confira e tente novamente.' });
           return;
         }
-        loginAttempts.delete(clientIp);
         const token = randomBytes(32).toString('base64url');
         sessions.set(token, { expiresAt: Date.now() + SESSION_TTL_MS });
         json(res, 200, { authenticated: true, expiresInMinutes: SESSION_TTL_MS / 60000 }, {

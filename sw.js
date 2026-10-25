@@ -1,4 +1,4 @@
-const CACHE_NAME = 'eqs-consulta-v20';
+const CACHE_NAME = 'eqs-consulta-v37';
 const ASSETS = [
     './',
     './index.html',
@@ -11,6 +11,7 @@ const ASSETS = [
     './claro-logo.png',
     './assets/github.svg',
     './assets/linkedin.svg',
+    './assets/hero-telecom-access.png',
     './fonts/archivo-latin-wght-normal.woff2',
     './fonts/barlow-latin-400-normal.woff2',
     './fonts/barlow-latin-500-normal.woff2',
@@ -40,8 +41,21 @@ self.addEventListener('fetch', (event) => {
         event.respondWith(fetch(event.request, { cache: 'no-store' }));
         return;
     }
+    if (event.request.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname.endsWith('.css')) {
+        event.respondWith(
+            fetch(event.request, { cache: 'no-store' }).then(async (response) => {
+                if (response.ok) {
+                    const clone = response.clone();
+                    const cache = await caches.open(CACHE_NAME);
+                    await cache.put(event.request, clone);
+                }
+                return response;
+            }).catch(() => caches.match(event.request, { ignoreSearch: true }))
+        );
+        return;
+    }
     if (url.pathname.endsWith('/app.js') || url.pathname.endsWith('/supabase-config.js')) {
-        event.respondWith(fetch(event.request, { cache: 'no-store' }).catch(() => caches.match(event.request)));
+        event.respondWith(fetch(event.request, { cache: 'no-store' }).catch(() => caches.match(event.request, { ignoreSearch: true })));
         return;
     }
 

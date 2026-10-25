@@ -19,15 +19,15 @@ const Elements = {
     resultsList: document.getElementById('results-list'),
     statusSync: document.getElementById('status-sync'),
     statusSearch: document.getElementById('status-search'),
+    resultsSection: document.getElementById('results-section'),
     spinnerContainer: document.getElementById('loading-spinner-container'),
     loadingText: document.getElementById('loading-text'),
-    themeCheck: document.getElementById('theme-check'),
+    themeChecks: document.querySelectorAll('.theme-control input[type="checkbox"]'),
     dashboardPanel: document.getElementById('dashboard-panel'),
-    filtersPanel: document.getElementById('filters-panel'),
     statTotal: document.getElementById('stat-total'),
     statOk: document.getElementById('stat-ok'),
     statBad: document.getElementById('stat-bad'),
-    filterChips: document.querySelectorAll('.filter-chip'),
+    statFilters: document.querySelectorAll('.stat-box[data-filter]'),
     baseTotal: document.getElementById('base-total'),
     baseTotalCopy: document.getElementById('base-total-copy'),
     resultsTitle: document.getElementById('results-title'),
@@ -90,8 +90,8 @@ function updateBaseSummary() {
     Elements.baseTotal.textContent = total ? String(total) : 'Nenhum';
     if (Elements.baseTotalCopy) {
         Elements.baseTotalCopy.textContent = total === 1
-            ? 'chamado cadastrado para consulta.'
-            : 'chamados cadastrados para consulta.';
+            ? 'chamado cadastrado no portal Integra.'
+            : 'chamados cadastrados no portal Integra.';
     }
 }
 
@@ -144,6 +144,32 @@ function buildNocMessage(data) {
         `*ID da detentora: ${data.t || '--'}*`,
         `*Número do chamado: #${data.c || '--'}*`
     ].join('\n');
+}
+
+function playSoftDouble() {
+    const AudioContextConstructor = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextConstructor) return;
+    let context;
+    try {
+        context = new AudioContextConstructor();
+        if (context.state === 'suspended') context.resume().catch(() => {});
+        const start = context.currentTime;
+        [[587, 0, .25, .034], [784, .14, .32, .027]].forEach(([frequency, delay, duration, peak]) => {
+            const oscillator = context.createOscillator();
+            const gain = context.createGain();
+            const noteStart = start + delay;
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(frequency, noteStart);
+            gain.gain.setValueAtTime(.0001, noteStart);
+            gain.gain.exponentialRampToValueAtTime(peak, noteStart + .018);
+            gain.gain.exponentialRampToValueAtTime(.0001, noteStart + duration);
+            oscillator.connect(gain);
+            gain.connect(context.destination);
+            oscillator.start(noteStart);
+            oscillator.stop(noteStart + duration + .01);
+        });
+        window.setTimeout(() => context.close().catch(() => {}), 610);
+    } catch { context?.close().catch(() => {}); }
 }
 
 function buildNocWhatsAppUrl(data) {
@@ -210,6 +236,9 @@ function populatePage(data) {
     DetailEls.accessType.textContent = data.cluster || 'Não informado';
     if (DetailEls.date) DetailEls.date.textContent = formatDate(data.f);
     DetailEls.status.textContent = statusLabel;
+    DetailEls.status.classList.toggle('is-approved', isApproved && !isOverdue);
+    DetailEls.status.classList.toggle('is-awaiting', isAwaiting);
+    DetailEls.status.classList.toggle('is-blocked', isBlocked);
     const address = data.e || 'Não informado';
     DetailEls.address.textContent = address;
 
@@ -302,9 +331,12 @@ async function fetchData() {
 }
 
 function showInitialLoading() {
+    Elements.resultsSection.hidden = true;
+    Elements.dashboardPanel.hidden = true;
     Elements.spinnerContainer.style.display = 'grid';
     Elements.loadingText.style.display = 'block';
     Elements.statusSync.innerHTML = '';
+    Elements.statusSync.hidden = true;
     Elements.statusSearch.innerHTML = '';
     updateResultsHeading('Carregando base', 'Preparando os dados publicados neste portal.');
     Elements.spinnerContainer.innerHTML = '';
@@ -336,15 +368,12 @@ async function fetchRemoteData(silent) {
 
         setCachedData(dataStore);
         updateBaseSummary();
-        Elements.statusSync.innerHTML = '<span class="status-sync-ok">Base operacional atualizada</span>';
+        Elements.statusSync.innerHTML = '';
+        Elements.statusSync.hidden = true;
         if (!Elements.input.value.trim()) {
             updateResultsHeading('Pronto para consultar', 'Informe um identificador para localizar o acesso.');
-            Elements.statusSearch.innerHTML = `
-                <div class="empty-state">
-                    <strong>Consulta direta e segura</strong>
-                    <span>Os dados são lidos do arquivo publicado neste portal.</span>
-                </div>
-            `;
+            Elements.resultsSection.hidden = true;
+            Elements.statusSearch.textContent = '';
         }
         clearTimeout(timeoutId);
     } catch (error) {
@@ -353,12 +382,14 @@ async function fetchRemoteData(silent) {
         if (cached) {
             dataStore = cached;
             updateBaseSummary();
-            Elements.statusSync.innerHTML = '<span class="status-sync-ok">Usando a última base salva neste dispositivo</span>';
+            Elements.statusSync.innerHTML = '';
+            Elements.statusSync.hidden = true;
             return;
         }
         dataStore = [];
         updateBaseSummary();
         updateResultsHeading('Base indisponível', 'Não foi possível ler o arquivo de chamados.');
+        Elements.statusSync.hidden = false;
         Elements.statusSync.innerHTML = `
             <div class="status-sync-fail">
                 <strong>Base de chamados indisponível</strong><br>
@@ -467,26 +498,19 @@ function handleSearch() {
     const query = removeAccents(Elements.input.value.trim().toLowerCase());
     const rawQuery = Elements.input.value.trim();
     Elements.resultsList.innerHTML = '';
-    document.getElementById('main-container').classList.add('has-results');
+    Elements.resultsSection.hidden = !query;
+    document.getElementById('main-container').classList.toggle('has-results', Boolean(query));
+    Elements.dashboardPanel.hidden = true;
 
     if (dataStore.length === 0) {
         Elements.statusSearch.textContent = 'Aguarde o carregamento inicial da base...';
         updateResultsHeading('Carregando base', 'A consulta será liberada assim que os dados estiverem prontos.');
-        Elements.dashboardPanel.style.display = 'none';
-        Elements.filtersPanel.style.display = 'none';
         return;
     }
 
     if (!query) {
         updateResultsHeading('Pronto para consultar', 'Informe um identificador para localizar o acesso.');
-        Elements.statusSearch.innerHTML = `
-            <div class="empty-state">
-                <strong>Digite um termo de busca</strong>
-                <span>Use o número do chamado, o site ou o ID da detentora.</span>
-            </div>
-        `;
-        Elements.dashboardPanel.style.display = 'none';
-        Elements.filtersPanel.style.display = 'none';
+        Elements.statusSearch.textContent = '';
         return;
     }
 
@@ -505,8 +529,6 @@ function handleSearch() {
                 <span>Tente parte do chamado, do site ou do ID da detentora.</span>
             </div>
         `;
-        Elements.dashboardPanel.style.display = 'none';
-        Elements.filtersPanel.style.display = 'none';
         return;
     }
 
@@ -530,8 +552,10 @@ function handleSearch() {
     const resultLabel = filtered.length === 1 ? '1 chamado encontrado' : `${filtered.length} chamados encontrados`;
     updateResultsHeading(resultLabel, `Busca por “${rawQuery}”.`);
     Elements.statusSearch.textContent = '';
-    Elements.dashboardPanel.style.display = 'grid';
-    Elements.filtersPanel.style.display = 'flex';
+    Elements.dashboardPanel.hidden = false;
+    Elements.statFilters.forEach((button) => {
+        button.setAttribute('aria-pressed', String(button.dataset.filter === currentFilter));
+    });
 
     let finalResults = [];
     if (currentFilter === 'all') {
@@ -587,7 +611,7 @@ function createModernCard(item) {
     const isBlocked = isOverdue || (!isApproved && !isAwaiting);
     const statusLabel = isOverdue ? 'Vencido' : (isApproved ? 'Liberado' : (item.s || 'Pendente'));
     const itemJson = JSON.stringify(item).replace(/'/g, "&#39;");
-    const statusVariant = isApproved ? 'is-approved' : (isAwaiting ? 'is-awaiting' : 'is-blocked');
+    const statusVariant = isBlocked ? 'is-blocked' : (isAwaiting ? 'is-awaiting' : 'is-approved');
     card.className = `result-card result-card--split ${statusVariant}`;
 
     card.innerHTML = `
@@ -639,6 +663,7 @@ if (DetailEls.copyChamado) {
     DetailEls.copyChamado.addEventListener('click', () => {
         const data = window._ticketData;
         if (!data) return;
+        playSoftDouble();
         playTicketCopyAnimation();
         copyText(String(data.c || ''), 'Chamado copiado!', 'Erro ao copiar.');
     });
@@ -649,21 +674,33 @@ if (DetailEls.copyAll) {
     DetailEls.copyAll.addEventListener('click', () => {
         const data = window._ticketData;
         if (!data || DetailEls.copyAll.disabled) return;
+        playSoftDouble();
         playTicketCopyAnimation();
         copyText(buildCopyAllText(data), 'Mensagem copiada!', 'Erro ao copiar mensagem.');
     });
 }
 
-// Theme toggle
-Elements.themeCheck.addEventListener('change', () => {
-    document.body.classList.toggle('dark-mode', Elements.themeCheck.checked);
-    localStorage.setItem('eqs-theme', Elements.themeCheck.checked ? 'dark' : 'light');
-});
-
-if (localStorage.getItem('eqs-theme') === 'dark') {
-    document.body.classList.add('dark-mode');
-    Elements.themeCheck.checked = true;
+if (DetailEls.nocWhatsApp) {
+    DetailEls.nocWhatsApp.addEventListener('click', playSoftDouble);
 }
+
+// Keep the theme control in both screens in sync.
+function applyTheme(isDark) {
+    document.body.classList.toggle('dark-mode', isDark);
+    Elements.themeChecks.forEach((control) => {
+        control.checked = isDark;
+        control.setAttribute('aria-label', isDark ? 'Ativar modo claro' : 'Ativar modo escuro');
+    });
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', isDark ? '#081525' : '#f5f8fc');
+}
+
+Elements.themeChecks.forEach((control) => {
+    control.addEventListener('change', () => {
+        applyTheme(control.checked);
+        localStorage.setItem('eqs-theme', control.checked ? 'dark' : 'light');
+    });
+});
+applyTheme(localStorage.getItem('eqs-theme') === 'dark');
 
 // Search events
 const debouncedSearch = debounce(handleSearch, CONFIG.DEBOUNCE_DELAY);
@@ -673,12 +710,10 @@ Elements.input.addEventListener('keypress', (e) => {
 });
 Elements.btn.addEventListener('click', handleSearch);
 
-// Filter chips
-Elements.filterChips.forEach(chip => {
-    chip.addEventListener('click', (e) => {
-        Elements.filterChips.forEach(c => c.classList.remove('active'));
-        e.target.classList.add('active');
-        currentFilter = e.target.dataset.filter;
+// The result summary cards are also the status filters.
+Elements.statFilters.forEach(button => {
+    button.addEventListener('click', () => {
+        currentFilter = button.dataset.filter;
         handleSearch();
     });
 });
@@ -713,7 +748,7 @@ window.addEventListener('load', fetchData);
 // PWA Service Worker
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js?v=20261024-supabase-v20', { updateViaCache: 'none' }).catch((error) => {
+        navigator.serviceWorker.register('sw.js?v=20261024-layout-v32', { updateViaCache: 'none' }).catch((error) => {
             console.warn('Service worker registration failed:', error);
         });
     });

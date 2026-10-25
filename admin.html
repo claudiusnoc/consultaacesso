@@ -3,23 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#121923">
+    <meta name="theme-color" content="#f5f8fc">
     <meta name="description" content="Atualização autorizada da base de acessos TBSA.">
     <title>Atualizar base | Consulta TBSA</title>
     <link rel="icon" href="claro-logo.png" type="image/png">
-    <link rel="stylesheet" href="index.css">
-    <link rel="stylesheet" href="admin.css">
+    <link rel="stylesheet" href="index.css?v=20261024-layout-19">
+    <link rel="stylesheet" href="admin.css?v=20261024-admin-5">
 </head>
 <body class="admin-page">
     <header class="topbar">
         <div class="topbar-inner">
-            <a class="brand" href="index.html" aria-label="Voltar à consulta TBSA">
-                <span class="brand-mark" aria-hidden="true"><img src="claro-logo.png" alt=""></span>
-                <img class="brand-eqs" src="logo-eqs-dark.png" alt="EQS Engenharia">
-                <span class="brand-divider" aria-hidden="true"></span>
-                <span class="brand-copy"><strong>Consulta TBSA</strong><small>Atualização da base</small></span>
-            </a>
-            <a class="admin-back" href="index.html">Voltar à consulta</a>
+            <div class="admin-topbar-start">
+                <a class="admin-back" href="index.html" aria-label="Voltar à consulta" title="Voltar à consulta">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m14.5 5-7 7 7 7"/></svg>
+                </a>
+                <div class="brand" aria-label="Claro e EQS Engenharia">
+                    <span class="brand-mark" aria-hidden="true"><img src="claro-logo.png" alt=""></span>
+                    <img class="brand-eqs" src="logo-eqs.webp" alt="EQS Engenharia">
+                    <span class="brand-divider" aria-hidden="true"></span>
+                </div>
+            </div>
+            <span class="topbar-title">Consulta TBSA</span>
+            <div class="theme-control">
+                <input type="checkbox" id="theme-check-admin" aria-label="Ativar modo escuro">
+                <label for="theme-check-admin" title="Alternar modo claro e escuro">
+                    <span class="theme-icon theme-icon--sun" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg></span>
+                    <span class="theme-icon theme-icon--moon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20.1 15.5A8.5 8.5 0 0 1 8.5 3.9 8.5 8.5 0 1 0 20.1 15.5Z"/></svg></span>
+                    <span class="toggle-knob" aria-hidden="true"></span>
+                </label>
+            </div>
         </div>
     </header>
 
@@ -27,14 +39,14 @@
         <section class="admin-intro" aria-labelledby="admin-title">
             <p class="page-label">Área administrativa</p>
             <h1 id="admin-title">Atualizar acessos publicados</h1>
-            <p>Envie a exportação <strong>ACESSOS TBSA.xlsx</strong>. A base é validada antes de substituir os dados de consulta.</p>
+            <p>Envie a planilha <strong>ACESSOS TBSA.xlsx</strong> para atualizar os dados de consulta.</p>
         </section>
 
         <section class="admin-card" id="authentication-panel" aria-labelledby="authentication-title">
             <div class="admin-card__heading">
                 <p class="section-kicker">Etapa 1</p>
                 <h2 id="authentication-title">Autorizar atualização</h2>
-                <p>Informe o código administrativo para liberar o envio da planilha.</p>
+                <p>Digite o código de acesso para liberar o envio da planilha.</p>
             </div>
             <form id="login-form" novalidate>
                 <label for="access-code">Código de acesso</label>
@@ -56,6 +68,7 @@
             </div>
             <form id="upload-form" novalidate>
                 <label class="file-field" for="spreadsheet-file">
+                    <span class="file-field__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 3.5h9l5 5v12H5z"/><path d="M14 3.5v5h5M8 13h8M8 16.5h8"/></svg></span>
                     <span class="file-field__label">Planilha de acessos</span>
                     <span class="file-field__action">Selecionar arquivo</span>
                     <input id="spreadsheet-file" name="planilha" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required aria-describedby="spreadsheet-help spreadsheet-error">
@@ -64,6 +77,28 @@
                 <p class="form-help" id="spreadsheet-help">O arquivo é validado e removido após a importação. A base publicada fica salva no banco de dados.</p>
                 <p class="form-error" id="spreadsheet-error" role="alert" hidden></p>
                 <button class="primary-button" id="upload-button" type="submit">Validar e publicar dados</button>
+                <section class="processing-progress" id="processing-progress" aria-label="Progresso da atualização" hidden>
+                    <div class="dossier-scene" id="dossier-scene" aria-hidden="true">
+                        <div class="dossier-scene__head">
+                            <span class="dossier-scene__identity">
+                                <span class="dossier-scene__file-icon"><svg viewBox="0 0 24 24" focusable="false"><path d="M6 3.5h8l4 4v13H6z"/><path d="M14 3.5v4h4M9 11h6M9 14h6M9 17h6"/></svg></span>
+                                <span class="dossier-scene__title"><strong>Base de processos</strong><small id="dossier-file-name">Planilha de acessos</small></span>
+                            </span>
+                            <span class="dossier-scene__format">.XLSX</span>
+                        </div>
+                        <div class="dossier-table">
+                            <div class="dossier-table__columns"><span>PROTOCOLO</span><span>SITE</span><span>STATUS</span></div>
+                            <div class="dossier-row"><span data-dossier="protocol">—</span><span data-dossier="site">—</span><b data-dossier="status">—</b></div>
+                            <div class="dossier-row"><span data-dossier="protocol">—</span><span data-dossier="site">—</span><b data-dossier="status">—</b></div>
+                            <div class="dossier-row"><span data-dossier="protocol">—</span><span data-dossier="site">—</span><b data-dossier="status">—</b></div>
+                            <i class="dossier-table__scanner"></i>
+                        </div>
+                        <div class="dossier-scene__foot"><span>REGISTROS CONFERIDOS</span><strong id="dossier-count">0 / 0</strong></div>
+                    </div>
+                    <div class="processing-progress__heading"><span id="processing-progress-title">Preparando planilha</span><strong id="processing-progress-value">0%</strong></div>
+                    <div class="processing-progress__track" id="processing-progress-track" role="progressbar" aria-label="Processamento da planilha" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="processing-progress-fill"></span></div>
+                    <p id="processing-progress-detail" aria-live="polite">Aguarde enquanto os registros são conferidos.</p>
+                </section>
             </form>
             <div class="import-result" id="import-result" role="status" aria-live="polite" hidden></div>
             <a class="consult-updated-base" id="consult-updated-base" href="index.html" hidden>Consultar base atualizada</a>
@@ -71,8 +106,21 @@
         </section>
     </main>
 
+    <dialog class="publish-dialog" id="publish-success-dialog" aria-labelledby="publish-success-title" aria-describedby="publish-success-description">
+        <div class="publish-dialog__content">
+            <span class="publish-dialog__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6.5 12.5 3.6 3.6 7.8-8.2"/><circle cx="12" cy="12" r="9.2"/></svg></span>
+            <p class="publish-dialog__eyebrow">BASE ATUALIZADA</p>
+            <h2 id="publish-success-title">Atualização concluída</h2>
+            <p id="publish-success-description">A planilha foi enviada e os dados já estão disponíveis para consulta.</p>
+            <div class="publish-dialog__actions">
+                <button class="secondary-button" id="success-dialog-close" type="button">Continuar aqui</button>
+                <a class="primary-button" id="success-dialog-consult" href="index.html">Consultar agora</a>
+            </div>
+        </div>
+    </dialog>
+
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="supabase-config.js"></script>
-    <script src="admin.js?v=20261024-supabase-18"></script>
+    <script src="admin.js?v=20261024-admin-7"></script>
 </body>
 </html>

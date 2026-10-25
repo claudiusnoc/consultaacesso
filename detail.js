@@ -21,6 +21,32 @@ const els = {
 
 const obsBlock = els.obs ? els.obs.closest('.obs-block') : null;
 
+function playSoftDouble() {
+    const AudioContextConstructor = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextConstructor) return;
+    let context;
+    try {
+        context = new AudioContextConstructor();
+        if (context.state === 'suspended') context.resume().catch(() => {});
+        const start = context.currentTime;
+        [[587, 0, .25, .034], [784, .14, .32, .027]].forEach(([frequency, delay, duration, peak]) => {
+            const oscillator = context.createOscillator();
+            const gain = context.createGain();
+            const noteStart = start + delay;
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(frequency, noteStart);
+            gain.gain.setValueAtTime(.0001, noteStart);
+            gain.gain.exponentialRampToValueAtTime(peak, noteStart + .018);
+            gain.gain.exponentialRampToValueAtTime(.0001, noteStart + duration);
+            oscillator.connect(gain);
+            gain.connect(context.destination);
+            oscillator.start(noteStart);
+            oscillator.stop(noteStart + duration + .01);
+        });
+        window.setTimeout(() => context.close().catch(() => {}), 610);
+    } catch { context?.close().catch(() => {}); }
+}
+
 function getTicketData() {
     const params = new URLSearchParams(window.location.search);
     const encoded = params.get('data');
@@ -163,6 +189,7 @@ if (els.copyChamado) {
     els.copyChamado.addEventListener('click', () => {
         const data = window._ticketData;
         if (!data) return;
+        playSoftDouble();
         playTicketCopyAnimation();
         copyText(String(data.c || ''), 'Chamado copiado!', 'Erro ao copiar.');
     });
@@ -172,6 +199,7 @@ if (els.copyAll) {
     els.copyAll.addEventListener('click', () => {
         const data = window._ticketData;
         if (!data || els.copyAll.disabled) return;
+        playSoftDouble();
         playTicketCopyAnimation();
         copyText(buildCopyAllText(data), 'Mensagem copiada!', 'Erro ao copiar mensagem.');
     });

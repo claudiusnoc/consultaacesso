@@ -10,27 +10,24 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="claro-logo.png" type="image/png">
     <link rel="apple-touch-icon" href="claro-logo.png">
-    <link rel="stylesheet" href="index.css?v=20261024-admin-8">
+    <link rel="stylesheet" href="index.css?v=20261024-layout-19">
 </head>
 
 <body>
     <div id="screen-index">
         <header class="topbar">
             <div class="topbar-inner">
-                <a class="brand" href="index.html" aria-label="Consulta de chamados TBSA">
+                <a class="brand" href="index.html" aria-label="EQS e Claro">
                     <span class="brand-mark" aria-hidden="true">
                         <img src="claro-logo.png" alt="">
                     </span>
                     <img class="brand-eqs" src="logo-eqs-dark.png" alt="EQS Engenharia">
                     <span class="brand-divider" aria-hidden="true"></span>
-                    <span class="brand-copy">
-                        <strong>Consulta TBSA</strong>
-                        <small>Portal de acessos</small>
-                    </span>
                 </a>
+                <span class="topbar-title">Consulta TBSA</span>
 
                 <div class="topbar-actions">
-                    <span class="sync-compact" aria-label="Base online"></span>
+                    <span class="sync-compact" aria-label="Base online" title="Base online"></span>
                     <a class="import-shortcut" href="admin.html" aria-label="Atualizar a base por planilha" title="Atualizar base">
                         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                             <path d="M5 3.75h10l4 4v12.5H5z"></path>
@@ -38,10 +35,10 @@
                         </svg>
                     </a>
                     <div class="theme-control">
-                        <input type="checkbox" id="theme-check">
-                        <label for="theme-check" aria-label="Alternar tema claro e escuro">
-                            <span>Claro</span>
-                            <span>Escuro</span>
+                        <input type="checkbox" id="theme-check" aria-label="Ativar modo escuro">
+                        <label for="theme-check" title="Alternar modo claro e escuro">
+                            <span class="theme-icon theme-icon--sun" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg></span>
+                            <span class="theme-icon theme-icon--moon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20.1 15.5A8.5 8.5 0 0 1 8.5 3.9 8.5 8.5 0 1 0 20.1 15.5Z"/></svg></span>
                             <span class="toggle-knob" aria-hidden="true"></span>
                         </label>
                     </div>
@@ -52,72 +49,62 @@
         <main class="main-container" id="main-container">
             <section class="page-heading" aria-labelledby="page-title">
                 <div>
-                    <p class="page-label">Operação TBSA</p>
                     <h1 id="page-title">Consulta de chamados</h1>
-                    <p class="page-description"><strong id="base-total">Carregando</strong> <span id="base-total-copy">chamados cadastrados para consulta.</span></p>
-                </div>
-                <div class="page-context" aria-label="Contexto da página">
-                    <span>Minas Gerais</span>
-                    <strong>Acessos de campo</strong>
+                    <p class="page-description"><strong id="base-total">Carregando</strong> <span id="base-total-copy">chamados cadastrados no portal Integra.</span></p>
                 </div>
             </section>
 
             <section class="search-section" aria-labelledby="search-title">
-                <div class="search-heading">
+                <div class="search-heading search-heading--visual">
                     <div>
-                        <h2 id="search-title">Localizar acesso</h2>
+                        <h2 id="search-title">Localize um acesso rapidamente</h2>
                         <p>Busque por chamado, site ou ID da detentora.</p>
                     </div>
-                    <span class="search-shortcut">Enter para consultar</span>
+                    <img class="search-visual" src="assets/hero-telecom-access.png" alt="" aria-hidden="true">
                 </div>
 
                 <div class="search-box">
                     <label class="search-field" for="search-input">
                         <span class="sr-only">Buscar chamado</span>
+                        <span class="search-field__label" aria-hidden="true">Chamado, site ou ID da detentora</span>
                         <input type="search" id="search-input" placeholder="Ex.: 417077, MGING01 ou TCMGIIN0001" autocomplete="off" enterkeyhint="search">
                     </label>
-                    <button id="search-btn" class="search-btn" type="button">Consultar</button>
+                    <button id="search-btn" class="search-btn" type="button">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4 4"></path></svg>
+                        Consultar
+                    </button>
                 </div>
                 <div id="status-sync" class="status-sync" role="status" aria-live="polite"></div>
             </section>
 
-            <section class="results-section" aria-live="polite">
+            <section class="results-section" id="results-section" aria-live="polite" hidden>
                 <div class="results-heading">
-                    <div>
-                        <p class="section-kicker">Resultado</p>
-                        <h2 id="results-title">Pronto para consultar</h2>
-                    </div>
+                    <div><h2 id="results-title">Pronto para consultar</h2></div>
                     <span class="results-hint" id="results-summary">Informe um identificador para localizar o acesso.</span>
                 </div>
 
-                <div class="dashboard-panel" id="dashboard-panel" style="display: none;">
-                    <div class="stat-box stat-total">
-                        <span class="stat-accent" aria-hidden="true"></span>
+                <div class="dashboard-panel" id="dashboard-panel" hidden>
+                    <button class="stat-box stat-total" data-filter="all" type="button" aria-pressed="true">
+                        <span class="stat-accent" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 3.5h7l3.5 3.5v13H7z"></path><path d="M14 3.5V7h3.5M9.5 11h5M9.5 14h5"></path></svg></span>
                         <span class="stat-label">Encontrados</span>
                         <strong class="stat-value" id="stat-total">0</strong>
-                    </div>
-                    <div class="stat-box stat-ok">
-                        <span class="stat-accent" aria-hidden="true"></span>
+                    </button>
+                    <button class="stat-box stat-ok" data-filter="approved" type="button" aria-pressed="false">
+                        <span class="stat-accent" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m7 12 3.2 3.2L17.5 8"></path><circle cx="12" cy="12" r="8.5"></circle></svg></span>
                         <span class="stat-label">Liberados</span>
                         <strong class="stat-value" id="stat-ok">0</strong>
-                    </div>
-                    <div class="stat-box stat-bad">
-                        <span class="stat-accent" aria-hidden="true"></span>
+                    </button>
+                    <button class="stat-box stat-bad" data-filter="blocked" type="button" aria-pressed="false">
+                        <span class="stat-accent" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5v5l3.2 2"></path></svg></span>
                         <span class="stat-label">Pendentes</span>
                         <strong class="stat-value" id="stat-bad">0</strong>
-                    </div>
-                </div>
-
-                <div class="filters-panel" id="filters-panel" style="display: none;" aria-label="Filtrar resultados">
-                    <button class="filter-chip active" data-filter="all" type="button">Todos</button>
-                    <button class="filter-chip" data-filter="approved" type="button">Liberados</button>
-                    <button class="filter-chip" data-filter="blocked" type="button">Pendentes</button>
+                    </button>
                 </div>
 
                 <div id="status-search" class="status-search" role="status" aria-live="polite">
                     <div class="empty-state">
-                        <strong>Consulta direta e segura</strong>
-                        <span>Os dados são lidos do arquivo publicado neste portal.</span>
+                        <strong>Consulte a base publicada</strong>
+                        <span>Digite um identificador para localizar o acesso.</span>
                     </div>
                 </div>
                 <div id="loading-spinner-container" class="loading-grid" aria-hidden="true"></div>
@@ -130,8 +117,18 @@
     <div id="screen-detail">
         <header class="topbar detail-topbar">
             <div class="topbar-inner">
-                <a class="back-link" href="index.html" id="nav-consulta">Voltar à consulta</a>
+                <a class="back-link" href="index.html" id="nav-consulta" aria-label="Voltar à consulta" title="Voltar">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m14.5 5-7 7 7 7"/></svg>
+                </a>
                 <span class="detail-context">Detalhes do chamado</span>
+                <div class="theme-control">
+                    <input type="checkbox" id="theme-check-detail" aria-label="Ativar modo escuro">
+                    <label for="theme-check-detail" title="Alternar modo claro e escuro">
+                        <span class="theme-icon theme-icon--sun" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg></span>
+                        <span class="theme-icon theme-icon--moon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20.1 15.5A8.5 8.5 0 0 1 8.5 3.9 8.5 8.5 0 1 0 20.1 15.5Z"/></svg></span>
+                        <span class="toggle-knob" aria-hidden="true"></span>
+                    </label>
+                </div>
             </div>
         </header>
 
@@ -172,7 +169,7 @@
 
                 <div class="called-grid">
                     <div class="called-meta">
-                        <span class="section-label">Supervisor</span>
+                        <span class="section-label">Responsável</span>
                         <strong id="detail-supervisor">-</strong>
                     </div>
                 </div>
@@ -207,6 +204,18 @@
 
             <button class="copy-all-btn" id="copy-all-btn" type="button">Copiar mensagem para o NOC</button>
         </main>
+
+        <footer class="detail-attribution" aria-label="Créditos e perfis do desenvolvedor">
+            <span class="detail-credit">Desenvolvido por Claudius Rangel</span>
+            <nav class="detail-social" aria-label="Perfis de Claudius Rangel">
+                <a href="https://github.com/claudiusnoc/claudiusnoc" target="_blank" rel="noopener noreferrer" aria-label="GitHub de Claudius Rangel">
+                    <img src="assets/github.svg" alt="">
+                </a>
+                <a href="https://www.linkedin.com/in/claudiusigor" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn de Claudius Rangel">
+                    <img src="assets/linkedin.svg" alt="">
+                </a>
+            </nav>
+        </footer>
     </div>
 
     <div id="pwa-install-banner" class="pwa-banner" style="display: none;">
@@ -239,7 +248,7 @@
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
     <script src="supabase-config.js"></script>
-    <script src="app.js?v=20261024-supabase-21"></script>
+    <script src="app.js?v=20261024-layout-34"></script>
 </body>
 
 </html>

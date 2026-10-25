@@ -15,6 +15,23 @@ async function startServer() {
   return { server, baseUrl: `http://127.0.0.1:${address.port}` };
 }
 
+test('tentativas inválidas não bloqueiam novas tentativas de acesso', async () => {
+  const instance = await startServer();
+  try {
+    for (let attempt = 0; attempt < 7; attempt++) {
+      const response = await fetch(`${instance.baseUrl}/api/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: 'codigo-invalido' }),
+      });
+      assert.equal(response.status, 401);
+      assert.equal((await response.json()).error, 'Código inválido. Confira e tente novamente.');
+    }
+  } finally {
+    await new Promise((resolve) => instance.server.close(resolve));
+  }
+});
+
 test('protege a importação e importa a exportação oficial', { skip: !spreadsheet }, async () => {
   let instance = await startServer();
   try {
