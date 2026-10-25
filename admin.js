@@ -274,11 +274,7 @@ function portalStatus(value) {
 }
 
 function validity(value) {
-    const raw = normalize(value);
-    if (!raw || /^\d{2}\/\d{2}\/\d{4}$/.test(raw)) return raw;
-    const date = new Date(raw);
-    if (Number.isNaN(date.getTime())) throw new Error(`DATA DE TERMINO inválida: ${raw}.`);
-    return new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' }).format(date);
+    return window.normalizePortalValidity(value);
 }
 
 async function parseSpreadsheet(file, onProgress = () => {}) {
